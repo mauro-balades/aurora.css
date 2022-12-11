@@ -7,16 +7,13 @@ import { Token } from "./tokens";
 export default class {
     private readonly source: Source;
 
-    private tokens: Array<Token>;
-    private pos: Position;
+    private tokens: Array<Token> = [];
+    private pos: Position = { line: 0, col: 0 };
 
     private lexeme: string = "";
 
     constructor(source: Source) {
         this.source = source;
-
-        this.tokens = [];
-        this.pos = { line: 0, col: 0 };
     }
 
     public tokenize(): LexerOutput {
@@ -26,12 +23,12 @@ export default class {
 
             if (char !== Symbols.SPACE && char !== Symbols.NEW_LINE) {
                 this.lexeme += char;
-                this.pos.col += 1;
-
             } else if (char === Symbols.NEW_LINE) {
                 this.pos.line += 1;
-                this.pos.col = 0;
+                this.pos.col = -1;
             }
+
+            this.pos.col += 1;
 
             if ((i+1) < content.length) {
                 if (
@@ -40,7 +37,10 @@ export default class {
                     (content[+1] === Symbols.NEW_LINE)) {
 
                     if (this.lexeme !== '') {
-                        let token = new Token(this.lexeme, this.pos);
+
+                        console.log(this.pos)
+
+                        let token = new Token(this.lexeme, { line: this.pos.line, col: (this.pos.col - this.lexeme.length) });
                         this.tokens.push(token);
 
                         this.lexeme = ''
