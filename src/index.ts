@@ -1,3 +1,4 @@
+import Lexer from "../libs/clear-preproc/lexer";
 
 const main = () => {
     // just for now
@@ -26,6 +27,11 @@ const main = () => {
             @f
         }
     `
+
+    let lexer = new Lexer({ content: source });
+    let lexerOutput = lexer.tokenize();
+    console.log(lexerOutput.tokens);
+
 }
 
 
