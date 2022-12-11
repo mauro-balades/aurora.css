@@ -3,10 +3,10 @@ import Lexer from "../libs/clear-preproc/lexer";
 const main = () => {
     // just for now
     let source = `
-        x = 1
-        y = 5
-        x-y-z = 6
-        col-z = berry
+        $x = 1;
+        $y = 5;
+        $x-y-z = 6;
+        $col-z = berry;
 
         @f{
             border: 10px solid black;

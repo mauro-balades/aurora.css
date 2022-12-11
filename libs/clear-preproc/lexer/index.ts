@@ -1,8 +1,8 @@
 import { Position } from "../position";
 import { Source } from "../source";
 import { LexerOutput } from "./interfaces";
-import { Symbols } from "./symbols";
-import { Token } from "./tokens";
+import { Symbols } from "../symbols";
+import { Token } from "../tokens";
 
 export default class {
     private readonly source: Source;
