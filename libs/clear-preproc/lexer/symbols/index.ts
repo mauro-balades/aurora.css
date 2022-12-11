@@ -18,4 +18,8 @@ export class Symbols {
     public static readonly UNION: string = '-'
     public static readonly DOT: string = '.'
     public static readonly AT: string = '@'
+
+    public static readonly KEYWORDS: Array<string> = [this.LEFT_BRACE, this.RIGHT_BRACE, this.NEW_LINE, this.TAB, this.COLON,
+        this.SEMI_COLON, this.SPACE, this.RIGHT_ROUND, this.LEFT_ROUND, this.COMMA, this.EQUAL]
+
 }
