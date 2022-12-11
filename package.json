@@ -1,0 +1,24 @@
+{
+  "name": "clear.css",
+  "version": "1.0.0",
+  "description": "A css preprocessor that allows you to write less and style more with an overall clear and beginner-friendly syntax",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mauro-balades/clear.css.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mauro-balades/clear.css/issues"
+  },
+  "homepage": "https://github.com/mauro-balades/clear.css#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.13",
+    "typescript": "^4.9.4"
+  }
+}
