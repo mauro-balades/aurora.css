@@ -121,6 +121,11 @@ export default class {
                     this.consume(TokenType.OP_BIT_XOR);
                     break;
                 }
+
+                case '.': {
+                    this.consume(TokenType.SYM_DOT);
+                    break;
+                }
     
                 case '"': {
                     let current_pos = this.pos;
