@@ -2,12 +2,13 @@ import { LexerOutput } from "../lexer/interfaces";
 import { Source } from "../source";
 import { Token, TokenType } from "../tokens";
 
-import { Block, CssNode, Node, Property } from "../nodes";
+import { Block, CssNode, FunctionArgument, Node, Property } from "../nodes";
 import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
 import { LookAhead } from "./look_ahead";
 import { IdentifierValue } from "../nodes/types/values";
+import { PseudoSelector } from "../selectors/pseudo";
 
 export default class {
     private readonly source: Source;
@@ -267,18 +268,21 @@ export default class {
 
                 let element = token.toString();
 
-                selector = new Selector(SelectorType.Element, element);
+                selector = new Selector(SelectorType.Element, element, token.pos);
                 selector.with = this._parse_same_element();
 
                 this.next();
 
             } else if (token.type === TokenType.OP_MUL) {
-                selector = new Selector(SelectorType.SelectAll, "*");
+                selector = new Selector(SelectorType.SelectAll, "*", token.pos);
                 selector.with = this._parse_same_element();
 
                 this.next();
             } else if (token.type === TokenType.SYM_COLLON) {
-                // TODO: selectors such as (:not, ::last-child, etc...)
+                selector = this._parse_pseudo();
+                selector.with = this._parse_same_element();
+
+                this.next();
             } else if (token.type === TokenType.BRACKET_LSQUARED) {
                 // TODO: attributes such as ([id="hey"], etc...)
             } else if (token.type === TokenType.SYM_HASH) {
@@ -290,7 +294,7 @@ export default class {
 
                 let id = token.toString();
 
-                selector = new Selector(SelectorType.ID, id);
+                selector = new Selector(SelectorType.ID, id, token.pos);
                 selector.with = this._parse_same_element();
 
                 this.next();
@@ -304,13 +308,13 @@ export default class {
 
                 let id = token.toString();
 
-                selector = new Selector(SelectorType.Class, id);
-                selector.with = this._parse_same_element();
+                selector = new Selector(SelectorType.Class, id, token.pos);
 
+                selector.with = this._parse_same_element();
                 this.next();
 
             } else if (token.type === TokenType.OP_BIT_AND) {
-                selector = new Selector(SelectorType.Parent, "&");
+                selector = new Selector(SelectorType.Parent, "&", token.pos);
                 selector.with = this._parse_same_element();
 
                 this.next();
@@ -329,38 +333,83 @@ export default class {
         return selectors;
     }
 
-    private _parse_same_element(): Array<Selector> {
-        let res: Array<Selector> = [];
+    private _parse_pseudo(): PseudoSelector {
+        this.next() // consume ":"
+        let pos = this.current_token.pos;
+
+        let has_double_collon: boolean = false;
+        if (this.current_token.type === TokenType.SYM_COLLON) {
+            has_double_collon =  true; this.next();
+        }
+
+        if (this.current_token.type !== TokenType.IDENTIFIER) {
+            this.parser_error(messages.unexpected_token("an identifier", this.current_token));
+        }
+
+        let name = this.current_token.toString();
+        this.next();
+
+        let args: Array<FunctionArgument> = []
+        if (this.current_token.type === TokenType.BRACKET_LPARENT) {
+            args = this._parse_arguments();
+            this.consume(TokenType.BRACKET_RPARENT, ")")
+        }
+
+        let selector = new PseudoSelector(name, pos, args);
+        selector.has_double_collon = has_double_collon;
+
+        this.previous()
+        return selector;
+    }
+
+    private _parse_arguments(): FunctionArgument[] {
+        let params: Array<FunctionArgument> = []
 
         while (true) {
-            let last_token = this.current_token;
-            if (this.isEof(last_token)) {
+            if (this.isEof(this.current_token)) {
                 this.parser_error(messages.unexpected_eof);
             }
 
-            let token = this.next();
+            this.next()
 
-            let to_add = token.toString().length === 1 ? 1 : last_token.toString().length;
-
-            if ((last_token.pos.line === token.pos.line) && (((last_token.pos.col + to_add) === token.pos.col))) {
-                if (this.valid_selectors.indexOf(token.type) !== -1) {
-
-                    let selectors = this._parse_selectors(true);
-
-                    res.push(...selectors);
-                    this.previous();
-
-                    break;
-                } else if (token.type === TokenType.SYM_COMMA) {
-                    break;
-                } else {
-                    this.parser_error(messages.unexpected_token("a valid selector character", token))
-                }
-            } else {
-                this.previous();
+            if (this.current_token.type === TokenType.BRACKET_RPARENT) {
                 break;
-            }
+            } else {
+                let param = this._parse_value();
+                params.push(param);
 
+                if ((this.current_token.type === TokenType.SYM_COMMA) || (this.current_token.type === TokenType.BRACKET_LPARENT)) {
+                    this.previous();
+                }
+            }
+        }
+
+        return params;
+    }
+
+    private _parse_same_element(): Array<Selector> {
+        let res: Array<Selector> = [];
+
+        let last_token = this.current_token;
+        if (this.isEof(last_token)) {
+            this.parser_error(messages.unexpected_eof);
+        }
+
+        let token = this.next();
+        let to_add = token.toString().length === 1 ? 1 : last_token.toString().length;
+
+        if ((last_token.pos.line === token.pos.line) && (((last_token.pos.col + to_add) === token.pos.col))) {
+            if (this.valid_selectors.indexOf(token.type) !== -1) {
+                let selectors = this._parse_selectors(true);
+
+                res.push(...selectors);
+                this.previous();
+
+            } else {
+                this.parser_error(messages.unexpected_token("a valid selector character", token))
+            }
+        } else {
+            this.previous();
         }
 
         return res;

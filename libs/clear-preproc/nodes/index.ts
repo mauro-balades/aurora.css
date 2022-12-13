@@ -11,6 +11,7 @@ export enum NodeType {
 }
 
 export type Block = Node[];
+export type FunctionArgument = Node | Selector;
 
 export class Node {
     public readonly pos: Position;

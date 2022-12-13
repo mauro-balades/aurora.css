@@ -1,9 +1,11 @@
+import { Position } from "../position";
+import { PseudoSelector } from "./pseudo";
 
 export enum SelectorType {
     Element,
     ID,
     Class,
-    Selector,
+    PseudoSelector,
     Attribute,
     Parent,
     SelectAll, // *
@@ -15,13 +17,14 @@ export class Selector {
     public readonly value: string;
     public with?: Selector[];
 
+    public pos: Position;
+
     // TODO: add support for "+ ~ >"
 
-    // TODO: node type
-    public attribute_value: any;
-
-    constructor(ty: SelectorType, val: string) {
+    constructor(ty: SelectorType, val: string, pos: Position) {
         this.type = ty;
         this.value = val;
+
+        this.pos = pos;
     }
 }
