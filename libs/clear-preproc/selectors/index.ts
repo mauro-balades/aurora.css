@@ -5,6 +5,7 @@ export enum SelectorType {
     Class,
     Selector,
     Attribute,
+    Parent,
     SelectAll, // *
 }
 

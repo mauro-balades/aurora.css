@@ -6,8 +6,8 @@ const main = () => {
     #element {
         border: 1px solid white;
 
-        input.error {
-            border-color: red;
+        & input.error {
+            border-color!: red;
         }
     }
     `

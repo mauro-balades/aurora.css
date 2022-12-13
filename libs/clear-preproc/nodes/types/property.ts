@@ -8,6 +8,8 @@ export class Property extends Node {
     public readonly name: PropertyName;
     public readonly values: Node[] = [];
 
+    public important: boolean = false;
+
     constructor(name: PropertyName, values: Node[], pos: Position) {
         super(NodeType.Property, pos);
 

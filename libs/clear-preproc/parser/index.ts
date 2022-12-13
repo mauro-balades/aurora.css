@@ -24,6 +24,7 @@ export default class {
         TokenType.SYM_COLLON,
         TokenType.BRACKET_LSQUARED,
         TokenType.SYM_HASH,
+        TokenType.OP_BIT_AND,
         TokenType.SYM_DOT,
     ];
 
@@ -59,6 +60,7 @@ export default class {
                 case TokenType.SYM_COLLON:
                 case TokenType.BRACKET_LSQUARED:
                 case TokenType.SYM_HASH:
+                case TokenType.OP_BIT_AND:
                 case TokenType.SYM_DOT: {
                     // https://www.w3schools.com/cssref/css_selectors.php
 
@@ -68,6 +70,7 @@ export default class {
                     // element <- identifier
                     // :selector <- : symbol
                     // [attribute] <- [ symbol
+                    // &:hover <- & symbol
                     // * <- mul symbol
 
                     let selectors: Array<Selector[]> = [];
@@ -223,7 +226,10 @@ export default class {
         } while (this.current_token.type !== TokenType.SYM_SEMI_COLLON)
         this.next();
 
-        return new Property(name, properties, pos);
+        let property = new Property(name, properties, pos);
+        property.important = is_important;
+
+        return property;
     }
 
     // @ts-ignore
@@ -303,6 +309,11 @@ export default class {
 
                 this.next();
 
+            } else if (token.type === TokenType.OP_BIT_AND) {
+                selector = new Selector(SelectorType.Parent, "&");
+                selector.with = this._parse_same_element();
+
+                this.next();
             } else {
                 this.parser_error(`BUG in selector parser! (token: "${token.toString()}")`);
             }
