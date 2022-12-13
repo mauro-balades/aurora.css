@@ -15,7 +15,7 @@ export class Selector {
     public readonly type: SelectorType;
 
     public readonly value: string;
-    public with?: Selector[];
+    public with: Selector[] = [];
 
     public pos: Position;
 

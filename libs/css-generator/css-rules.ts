@@ -1,8 +1,14 @@
 import { CSSProperty } from "./properties";
+import { CSS } from "./css";
 
-export class CSSRules {
+export class CSSRule extends CSS {
     private properties: CSSProperty[] = [];
-    private selector: string = "";
+    public selector: string = "";
 
-    constructor() {}
+    constructor(selector: string, properties: CSSProperty[]) {
+        super();
+
+        this.selector = selector;
+        this.properties = properties;
+    }
 }

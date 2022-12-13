@@ -1,10 +1,15 @@
-import { Lexer, Parser } from "../libs/clear-preproc";
+import { Generator, Lexer, Parser } from "../libs/clear-preproc";
 
 const main = () => {
     // just for now
     let source = `
-    #element::before.div::after {}
-    #element:nth-child(2) {}
+    #element {
+        border-top: 2px solid black;
+
+        .error {
+            border-top-color: red;
+        }
+    }
     `
 
     let lexer = new Lexer({ content: source });
@@ -13,7 +18,8 @@ const main = () => {
     let parser = new Parser(lexerOutput)
     let nodes = parser.getNodes();
 
-    console.log(require("util").inspect(nodes, {showHidden: false, depth: null, colors: true}))
+    let generator = new Generator(nodes, lexerOutput.source);
+    generator.generate();
 }
 
 
