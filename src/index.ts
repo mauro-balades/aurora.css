@@ -3,11 +3,13 @@ import { Lexer, Parser } from "../libs/clear-preproc";
 const main = () => {
     // just for now
     let source = `
-    #element {}
-    #element.hello {}
-    *.hey {}
-    .amazing-class#awd {}
-    #element .my-element {}
+    #element {
+        border: 1px solid white;
+
+        input.error {
+            border-color: red;
+        }
+    }
     `
 
     let lexer = new Lexer({ content: source });

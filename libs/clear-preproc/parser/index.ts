@@ -2,10 +2,12 @@ import { LexerOutput } from "../lexer/interfaces";
 import { Source } from "../source";
 import { Token, TokenType } from "../tokens";
 
-import { Node } from "../nodes";
+import { Block, CssNode, Node, Property } from "../nodes";
 import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
+import { LookAhead } from "./look_ahead";
+import { IdentifierValue } from "../nodes/types/values";
 
 export default class {
     private readonly source: Source;
@@ -68,13 +70,18 @@ export default class {
                     // [attribute] <- [ symbol
                     // * <- mul symbol
 
-                    let selectors = this._parse_selectors();
-                    console.log(selectors)
-                    this.consume(TokenType.BRACKET_LCURLY, "{");
+                    let selectors: Array<Selector[]> = [];
+                    let pos = this.current_token.pos;
 
-                    // (WIP): this is for now.
-                    // TODO: delete this when starting with body parsing
-                    this.consume(TokenType.BRACKET_RCURLY, "}");
+                    do {
+                        let selector = this._parse_selectors();
+                        selectors.push(selector)
+                    } while (this.current_token.type === (TokenType.SYM_COMMA as TokenType));
+
+                    let block = this.parse_css_block();
+
+                    let node = new CssNode(selectors, block, pos);
+                    this.nodes.push(node);
 
                     break;
                 }
@@ -84,6 +91,41 @@ export default class {
                 }
             }
         }
+    }
+
+    private parse_css_block(): Block {
+        let nodes: Block = [];
+
+        this.consume(TokenType.BRACKET_LCURLY, "{");
+
+        while (this.current_token.type !== TokenType.BRACKET_RCURLY) {
+            if (this.isEof(this.current_token)) {
+                this.parser_error(messages.unexpected_eof);
+            }
+
+            let look_ahead = this._look_for_value();
+            if (look_ahead === LookAhead.CssSelector) {
+                let selectors: Array<Selector[]> = [];
+                let pos = this.current_token.pos;
+
+                do {
+                    let selector = this._parse_selectors();
+                    selectors.push(selector)
+                } while (this.current_token.type === (TokenType.SYM_COMMA as TokenType));
+
+                let block = this.parse_css_block();
+
+                let node = new CssNode(selectors, block, pos);
+                nodes.push(node);
+            } else if (look_ahead === LookAhead.CssProperty) {
+                let prop = this._parse_property();
+                nodes.push(prop);
+            }
+        }
+
+        this.consume(TokenType.BRACKET_RCURLY, "}");
+
+        return nodes;
     }
 
     // helper functions
@@ -111,7 +153,7 @@ export default class {
 
     private peek(offset: number = 0): Token {
         try {
-            return this.tokens[offset]
+            return this.tokens[this.token_index + offset]
         } catch(_) {
             return this.tokens[this.tokens.length - 1]
         }
@@ -126,7 +168,81 @@ export default class {
         throw Error(`Error: ${message} [${pos.line}:${pos.col}]`)
     }
 
+    // parsing helper functions (not related to token movement)
+
+    private _look_for_value(): LookAhead {
+        let list = [TokenType.BRACKET_LCURLY, TokenType.BRACKET_RCURLY, TokenType.SYM_SEMI_COLLON];
+
+        let peek_offset = 0;
+        let last_token = this.current_token;
+
+        while (true) {
+            if (this.isEof(last_token)) {
+                this.parser_error(messages.unexpected_eof)
+            }
+
+            let peek = this.peek(peek_offset);
+            if (list.indexOf(peek.type) !== -1) {
+                if (peek.type === TokenType.BRACKET_LCURLY)
+                    return LookAhead.CssSelector;
+                else if (peek.type === TokenType.BRACKET_RCURLY)
+                    return LookAhead.EndOfCssBlock;
+                else if (peek.type === TokenType.SYM_SEMI_COLLON)
+                    return LookAhead.CssProperty;
+            }
+
+            peek_offset++;
+            last_token = peek;
+        }
+    }
+
     // parsing methods
+    private _parse_property(): Property {
+        if (this.current_token.type !== TokenType.IDENTIFIER) {
+            this.parser_error(messages.unexpected_token("an identifier", this.current_token));
+        }
+
+        let pos = this.current_token.pos;
+        let name = this.current_token.toString(); this.next();
+
+        let is_important = false;
+        if (this.current_token.type === TokenType.OP_NOT) {
+            this.next(); is_important = true;
+        }
+
+        this.consume(TokenType.SYM_COLLON, ":")
+
+        let properties: Array<Node> = [];
+        if (this.peek().type === TokenType.SYM_SEMI_COLLON) {
+            this.parser_error(messages.empty_property, this.next().pos)
+        }
+
+        do {
+            properties.push(this._parse_value());
+            this.next();
+        } while (this.current_token.type !== TokenType.SYM_SEMI_COLLON)
+        this.next();
+
+        return new Property(name, properties, pos);
+    }
+
+    // @ts-ignore
+    private _parse_value(): Node {
+        if (this.current_token.type === TokenType.SYM_DOLLAR) {
+            throw Error("TODO: variables");
+        } else if (this.current_token.type === TokenType.IDENTIFIER && this.peek().type === TokenType.BRACKET_LPARENT) {
+            throw Error("TODO: function calls");
+        } else if (this.current_token.type === TokenType.IDENTIFIER) {
+            // TODO: also parse numbers (.2px, 9.1, 7rem, ...)
+            return new IdentifierValue(this.current_token.toString(), this.current_token.pos)
+        } else if (this.current_token.type === TokenType.VALUE_STRING) {
+            throw Error("TODO: string value");
+        } else if (this.current_token.type === TokenType.SYM_HASH) {
+            throw Error("TODO: hex values");
+        }
+
+        this.parser_error(messages.undefined_token(this.current_token))
+    }
 
     private _parse_selectors(trailing: boolean = false): Array<Selector>  {
         let selectors: Array<Selector> = [];
@@ -221,9 +337,10 @@ export default class {
                     let selectors = this._parse_selectors(true);
 
                     res.push(...selectors);
-                    console.log(`^- this selectors: ${JSON.stringify(selectors)}\n`)
                     this.previous();
 
+                    break;
+                } else if (token.type === TokenType.SYM_COMMA) {
                     break;
                 } else {
                     this.parser_error(messages.unexpected_token("a valid selector character", token))

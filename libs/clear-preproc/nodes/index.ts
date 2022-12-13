@@ -1,10 +1,18 @@
 import { Position } from "../position";
+import { Selector } from "../selectors";
 
 export enum NodeType {
     None,
+
+    CssRule,
+    Property,
+
+    Value
 }
 
-export abstract class Node {
+export type Block = Node[];
+
+export class Node {
     public readonly pos: Position;
     public readonly type: NodeType;
 
@@ -12,6 +20,10 @@ export abstract class Node {
         this.pos = pos;
         this.type = ty;
     }
-
-    public toString(): string { throw Error("To string not defiend in node"); }
 }
+
+export { CssNode } from "./types/cssRule";
+export { Property } from "./types/property";
+export { Value } from "./types/value";
+
+export * as values from "./types/values";
