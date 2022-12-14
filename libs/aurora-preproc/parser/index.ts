@@ -2,7 +2,7 @@ import { LexerOutput } from "../lexer/interfaces";
 import { Source } from "../source";
 import { Token, TokenType } from "../tokens";
 
-import { Block, CssNode, FunctionArgument, Node, Property } from "../nodes";
+import { Block, CssNode, FunctionArgument, Node, Property, Value } from "../nodes";
 import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
@@ -216,7 +216,7 @@ export default class {
 
         this.consume(TokenType.SYM_COLLON, ":")
 
-        let properties: Array<Node> = [];
+        let properties: Array<Value> = [];
         if (this.peek().type === TokenType.SYM_SEMI_COLLON) {
             this.parser_error(messages.empty_property, this.next().pos)
         }
@@ -234,7 +234,7 @@ export default class {
     }
 
     // @ts-ignore
-    private _parse_value(): Node {
+    private _parse_value(): Value {
         if (this.current_token.type === TokenType.SYM_DOLLAR) {
             throw Error("TODO: variables");
         } else if (this.current_token.type === TokenType.IDENTIFIER && this.peek().type === TokenType.BRACKET_LPARENT) {

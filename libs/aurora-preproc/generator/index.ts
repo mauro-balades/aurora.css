@@ -1,7 +1,9 @@
 import { CSS, CSSGenerator, CSSProperty, CSSRule } from "../../css-generator";
-import { CSSValue } from "../../css-generator/value";
+import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
-import { CssNode, Node, NodeType, Property } from "../nodes";
+import { CssNode, Node, NodeType, Property, Value } from "../nodes";
+import { ValueType } from "../nodes/types/value";
+import { IdentifierValue } from "../nodes/types/values";
 import { Position } from "../position";
 import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
@@ -162,6 +164,15 @@ export class Generator {
         return result;
     }
 
+    private generate_css_value(node: Value): CSSValue | undefined {
+        if (node.value_type === ValueType.Identifier) {
+            let identifier = node as IdentifierValue;
+            return new CSSValue(CSSValueType.Identifier, identifier.value);
+        }
+
+        this.throw_error("(BUG): undefined value not handled!", node.pos);
+    }
+
     // generate nodes
     private generate_css_rule(node: CssNode): CSSRule {
         let properties: Array<CSSProperty> = [];
@@ -186,7 +197,11 @@ export class Generator {
     private generate_css_property(node: Property): CSSProperty {
         let values: Array<CSSValue> = [];
 
-        throw Error("TODO: css values")
+        for (const value of node.values) {
+            let result = this.generate_css_value(value) as CSSValue; // we know it's not undefined!
+
+            values.push(result);
+        }
 
         return new CSSProperty(node.name, values, node.important);
     }
