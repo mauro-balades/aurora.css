@@ -1,4 +1,4 @@
-import { Generator, Lexer, Parser } from "../libs/clear-preproc";
+import { Generator, Lexer, Parser } from "../libs/aurora-preproc";
 
 const main = () => {
     // just for now

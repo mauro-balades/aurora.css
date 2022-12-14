@@ -1,5 +1,5 @@
 {
-  "name": "clear.css",
+  "name": "aurora.css",
   "version": "1.0.0",
   "description": "A css preprocessor that allows you to write less and style more with an overall clear and beginner-friendly syntax",
   "main": "./build/index.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mauro-balades/clear.css.git"
+    "url": "git+https://github.com/mauro-balades/aurora.css.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mauro-balades/clear.css/issues"
+    "url": "https://github.com/mauro-balades/aurora.css/issues"
   },
-  "homepage": "https://github.com/mauro-balades/clear.css#readme",
+  "homepage": "https://github.com/mauro-balades/aurora.css#readme",
   "devDependencies": {
     "@types/node": "^18.11.13",
     "jest": "^29.3.1",
