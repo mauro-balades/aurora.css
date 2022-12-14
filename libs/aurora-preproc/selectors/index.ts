@@ -11,6 +11,8 @@ export enum SelectorType {
     SelectAll, // *
 }
 
+export type SelectorList = Array<Selector[]>;
+
 export class Selector {
     public readonly type: SelectorType;
 

@@ -45,7 +45,6 @@ export enum TokenType {
     OP_NOT,            // Symbol: !
 
     // Double character tokens
-    OP_AND,            // Symbol: &&
     OP_OR,             // Symbol: ||
 
     // Bitwise operations
@@ -103,7 +102,6 @@ export class Token {
             // Asignment
             case TokenType.OP_EQ:              this.value = "="; break;
             case TokenType.OP_OR:              this.value = "||"; break;
-            case TokenType.OP_AND:             this.value = "&&"; break;
             case TokenType.OP_NOT:             this.value = "!"; break;
 
             // Bitwise operations

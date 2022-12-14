@@ -6,7 +6,15 @@ const main = () => {
     #element {
         border-top: 2px solid black;
 
-        .error {
+        &.hey & {
+            border-top-color: red;
+
+            & input.error {
+                border-top-color: red;
+            }
+        }
+
+        &&&& div & {
             border-top-color: red;
         }
     }

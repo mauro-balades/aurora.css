@@ -3,7 +3,7 @@ import { CSSValue } from "../../css-generator/value";
 import { messages } from "../diagnostics";
 import { CssNode, Node, NodeType, Property } from "../nodes";
 import { Position } from "../position";
-import { Selector, SelectorType } from "../selectors";
+import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
 import { Source } from "../source";
 
@@ -13,7 +13,7 @@ export class Generator {
 
     private readonly builder: CSSGenerator;
     private state = {
-        current_selector_tree: ([] as CssNode[])
+        current_selector_tree: ([] as Array<string>)
     };
 
     constructor(nodes: Node[], source: Source) {
@@ -51,6 +51,16 @@ export class Generator {
     }
 
     // utility functions
+    private get_parent_selector(): string {
+        let res = "";
+
+        for (const selector of this.state.current_selector_tree) {
+            res += selector;
+        }
+
+        return res;
+    }
+
     private generate_selector(selector: Selector): string {
         let result = "";
 
@@ -103,7 +113,11 @@ export class Generator {
             
             case SelectorType.Parent: {
                 // TODO: (this.state.selector_tree) - get most recent and replace
-                this.throw_error("TODO: parent", selector.pos)
+                if (this.state.current_selector_tree.length === 0) {
+                    this.throw_error(messages.unexpected_parent_selector, selector.pos)
+                }
+
+                result += this.get_parent_selector();
                 break;
             }
             
@@ -131,7 +145,7 @@ export class Generator {
             let selector_list = selectors[i];
 
             for (let x = 0; x < selector_list.length; x++) {
-                let selector = selector_list[i];
+                let selector = selector_list[x];
 
                 result += this.generate_selector(selector);
 
@@ -153,14 +167,14 @@ export class Generator {
         let properties: Array<CSSProperty> = [];
 
         let selector = this.generate_selectors(node.selectors);
+        this.state.current_selector_tree.push(selector);
         console.log(`selector: ${selector}`)
 
         for (const block_node of node.block) {
-            throw Error("TODO: css block!")
+            let result = this.generate_node(block_node);
         }
 
-        console.log(node)
-
+        this.state.current_selector_tree.pop();
         return undefined as any
     }
 

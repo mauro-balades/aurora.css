@@ -113,8 +113,7 @@ export default class {
                     }
                 }
                 case '&': {
-                    if (this.get(1) == '&') this.consume(TokenType.OP_AND, 2);
-                    else this.consume(TokenType.OP_BIT_AND);
+                    this.consume(TokenType.OP_BIT_AND);
                     break;
                 }
                 case '^': {
