@@ -168,18 +168,25 @@ export class Generator {
 
         let selector = this.generate_selectors(node.selectors);
         this.state.current_selector_tree.push(selector);
-        console.log(`selector: ${selector}`)
 
         for (const block_node of node.block) {
             let result = this.generate_node(block_node);
+
+            if (result instanceof CSSProperty) {
+                properties.push(result);
+            }
         }
 
         this.state.current_selector_tree.pop();
-        return undefined as any
+
+        let rule = new CSSRule(selector, properties);
+        return rule;
     }
 
     private generate_css_property(node: Property): CSSProperty {
         let values: Array<CSSValue> = [];
+
+        throw Error("TODO: css values")
 
         return new CSSProperty(node.name, values, node.important);
     }
