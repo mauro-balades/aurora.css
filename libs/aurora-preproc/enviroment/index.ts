@@ -8,7 +8,7 @@ export class Enviroment {
     }
 
     public get(name: string): ScopeValue | undefined {
-        let reversed = this.scopes.reverse();
+        let reversed = this.scopes.slice().reverse();
         for (const scope of reversed) {
             let [found, value] = scope.find(name);
 
@@ -17,6 +17,24 @@ export class Enviroment {
             }
         }
     }
+
+    public create_scope(): Scope {
+        let scope = new Scope();
+        this.scopes.push(scope);
+
+        return scope;
+    }
+
+    public delete_scope(): void {
+        this.scopes.pop();
+    }
+
+    public with_scope(callback: () => void): void {
+        this.create_scope();
+        callback();
+        this.delete_scope()
+    }
+
 
     public current_scope(): Scope {
         return this.scopes[this.scopes.length - 1];

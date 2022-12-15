@@ -2,13 +2,14 @@ import { LexerOutput } from "../lexer/interfaces";
 import { Source } from "../source";
 import { Token, TokenType } from "../tokens";
 
-import { Block, CssNode, FunctionArgument, Node, Property, Value } from "../nodes";
+import { Block, CssNode, FunctionArgument, Node, Property, Value, VariableDeclaration } from "../nodes";
 import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
 import { LookAhead } from "./look_ahead";
 import { IdentifierValue } from "../nodes/types/values";
 import { PseudoSelector } from "../selectors/pseudo";
+import { VariableValue } from "../nodes/types/values/variable";
 
 export default class {
     private readonly source: Source;
@@ -90,6 +91,13 @@ export default class {
                     break;
                 }
 
+                case TokenType.SYM_DOLLAR: {
+                    let decl = this._parse_variable_decl();
+                    this.nodes.push(decl);
+
+                    break;
+                }
+
                 default: {
                     this.parser_error(messages.undefined_token(this.current_token));
                 }
@@ -122,8 +130,13 @@ export default class {
                 let node = new CssNode(selectors, block, pos);
                 nodes.push(node);
             } else if (look_ahead === LookAhead.CssProperty) {
-                let prop = this._parse_property();
-                nodes.push(prop);
+                if (this.current_token.type === TokenType.SYM_DOLLAR) {
+                    let decl = this._parse_variable_decl();
+                    nodes.push(decl);
+                } else {
+                    let prop = this._parse_property();
+                    nodes.push(prop);
+                }
             }
         }
 
@@ -201,6 +214,28 @@ export default class {
     }
 
     // parsing methods
+
+    private _parse_variable_decl(): VariableDeclaration {
+        let pos = this.current_token.pos;
+
+        this.next();
+        if (this.current_token.type !== (TokenType.IDENTIFIER as TokenType)) {
+            this.parser_error(messages.unexpected_token("an identifier", this.current_token));
+        }
+
+        let name = this.current_token.toString(); this.next();
+        this.consume(TokenType.SYM_COLLON, ":");
+        let values: Array<Value> = [];
+
+        do {
+            values.push(this._parse_value());
+            this.next();
+        } while (this.current_token.type !== (TokenType.SYM_SEMI_COLLON as TokenType));
+        this.next();
+
+        return new VariableDeclaration(name, values, pos);
+    }
+
     private _parse_property(): Property {
         if (this.current_token.type !== TokenType.IDENTIFIER) {
             this.parser_error(messages.unexpected_token("an identifier", this.current_token));
@@ -236,7 +271,12 @@ export default class {
     // @ts-ignore
     private _parse_value(): Value {
         if (this.current_token.type === TokenType.SYM_DOLLAR) {
-            throw Error("TODO: variables");
+            this.next();
+            if (this.current_token.type !== (TokenType.IDENTIFIER as TokenType)) {
+                this.parser_error(messages.unexpected_token("an identifier", this.current_token));
+            }
+
+            return new VariableValue(this.current_token.toString(), this.current_token.pos)
         } else if (this.current_token.type === TokenType.IDENTIFIER && this.peek().type === TokenType.BRACKET_LPARENT) {
             throw Error("TODO: function calls");
         } else if (this.current_token.type === TokenType.IDENTIFIER) {

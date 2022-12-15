@@ -3,7 +3,8 @@ import { Node, NodeType } from "..";
 import { Position } from "../../position";
 
 export enum ValueType {
-    Identifier
+    Identifier,
+    Variable
 };
 
 export class Value extends Node {

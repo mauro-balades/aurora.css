@@ -1,9 +1,10 @@
 import { CSS, CSSGenerator, CSSProperty, CSSRule } from "../../css-generator";
 import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
-import { CssNode, Node, NodeType, Property, Value } from "../nodes";
+import { Enviroment } from "../enviroment";
+import { CssNode, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
 import { ValueType } from "../nodes/types/value";
-import { IdentifierValue } from "../nodes/types/values";
+import { IdentifierValue, VariableValue } from "../nodes/types/values";
 import { Position } from "../position";
 import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
@@ -12,6 +13,8 @@ import { Source } from "../source";
 export class Generator {
     private readonly nodes: Node[];
     private readonly source: Source;
+
+    private readonly enviroment: Enviroment;
 
     private readonly builder: CSSGenerator;
     private state = {
@@ -23,6 +26,7 @@ export class Generator {
         this.source = source;
 
         this.builder = new CSSGenerator();
+        this.enviroment = new Enviroment();
     }
 
     // error handling
@@ -47,6 +51,8 @@ export class Generator {
             return this.generate_css_rule(node as CssNode);
         } else if (node.type === NodeType.Property) {
             return this.generate_css_property(node as Property);
+        } else if (node.type === NodeType.VariableDecl) {
+            return this.generate_var_declaration(node as VariableDeclaration);
         }
 
         this.throw_error(`(BUG) unhandled node found: ${node.type}`, node.pos)
@@ -167,7 +173,17 @@ export class Generator {
     private generate_css_value(node: Value): CSSValue | undefined {
         if (node.value_type === ValueType.Identifier) {
             let identifier = node as IdentifierValue;
-            return new CSSValue(CSSValueType.Identifier, identifier.value);
+            return new CSSValue(CSSValueType.CssOutput, identifier.value);
+        } else if (node.value_type === ValueType.Variable) {
+            let identifier = node as VariableValue;
+
+            let variable = this.enviroment.get(identifier.name);
+            if (typeof variable === "undefined") {
+                this.throw_error(messages.undefined_variable(identifier.name), node.pos);
+            }
+
+            console.log(variable)
+            return new CSSValue(CSSValueType.CssValueList, variable);
         }
 
         this.throw_error("(BUG): undefined value not handled!", node.pos);
@@ -180,18 +196,35 @@ export class Generator {
         let selector = this.generate_selectors(node.selectors);
         this.state.current_selector_tree.push(selector);
 
-        for (const block_node of node.block) {
-            let result = this.generate_node(block_node);
-
-            if (result instanceof CSSProperty) {
-                properties.push(result);
+        this.enviroment.with_scope(() => {
+            for (const block_node of node.block) {
+                let result = this.generate_node(block_node);
+    
+                if (result instanceof CSSProperty) {
+                    properties.push(result);
+                }
             }
-        }
+        });
 
         this.state.current_selector_tree.pop();
 
         let rule = new CSSRule(selector, properties);
         return rule;
+    }
+
+    private generate_var_declaration(node: VariableDeclaration): undefined {
+
+        let values: Array<CSSValue> = [];
+
+        for (const value of node.values) {
+            let result = this.generate_css_value(value) as CSSValue; // we know it's not undefined!
+            values.push(result);
+        }
+
+        this.enviroment.set(node.name, values);
+
+        // We don't need to return anything... right?
+        return undefined;
     }
 
     private generate_css_property(node: Property): CSSProperty {

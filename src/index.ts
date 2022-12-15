@@ -3,8 +3,9 @@ import { Generator, Lexer, Parser } from "../libs/aurora-preproc";
 const main = () => {
     // just for now
     let source = `
+    $color: white;
     #element {
-        border-top: 2px solid black;
+        border-top: 2px solid $color;
 
         &.hey & {
             border-top-color: red;
@@ -14,9 +15,15 @@ const main = () => {
             }
         }
 
-        &&&& div & {
-            border-top-color: red;
+        $color: red;
+
+        & div {
+            border-top-color: $color;
         }
+    }
+
+    .my-div {
+        background: $color;
     }
     `
 

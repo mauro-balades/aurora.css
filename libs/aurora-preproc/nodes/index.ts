@@ -7,7 +7,8 @@ export enum NodeType {
     CssRule,
     Property,
 
-    Value
+    Value,
+    VariableDecl,
 }
 
 export type Block = Node[];
@@ -26,5 +27,6 @@ export class Node {
 export { CssNode } from "./types/cssRule";
 export { Property } from "./types/property";
 export { Value } from "./types/value";
+export { VariableDeclaration } from "./types/var_decl";
 
 export * as values from "./types/values";

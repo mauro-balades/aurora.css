@@ -1,7 +1,8 @@
-import { type } from "os";
+import { CSSValue } from "../../css-generator/value";
+
 
 export type ScopeList = Scope[];
-export type ScopeValue = string;
+export type ScopeValue = Array<CSSValue>;
 export type ScopeMap = Map<string, ScopeValue>;
 
 export class Scope {
