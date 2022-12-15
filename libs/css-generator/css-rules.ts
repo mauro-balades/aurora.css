@@ -11,4 +11,19 @@ export class CSSRule extends CSS {
         this.selector = selector;
         this.properties = properties;
     }
+
+    public toString(): string {
+        let output = "";
+
+        output += this.selector;
+        output += " {\n";
+
+        for (const property of this.properties) {
+            output += "\t" + property.toString();
+        }
+
+        output += "\n}\n";
+
+        return output;
+    }
 }

@@ -2,6 +2,7 @@ import { CSS, CSSGenerator, CSSProperty, CSSRule } from "../../css-generator";
 import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
 import { Enviroment } from "../enviroment";
+import { ScopeValue } from "../enviroment/scopes";
 import { CssNode, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
 import { ValueType } from "../nodes/types/value";
 import { IdentifierValue, VariableValue } from "../nodes/types/values";
@@ -163,7 +164,7 @@ export class Generator {
             }
 
             if (i < (selectors.length - 1)) {
-                result += `,`;
+                result += ",";
             }
         }
 
@@ -182,8 +183,7 @@ export class Generator {
                 this.throw_error(messages.undefined_variable(identifier.name), node.pos);
             }
 
-            console.log(variable)
-            return new CSSValue(CSSValueType.CssValueList, variable);
+            return new CSSValue(CSSValueType.CssValueList, variable as ScopeValue);
         }
 
         this.throw_error("(BUG): undefined value not handled!", node.pos);
@@ -209,6 +209,8 @@ export class Generator {
         this.state.current_selector_tree.pop();
 
         let rule = new CSSRule(selector, properties);
+        this.builder.add_block(rule);
+
         return rule;
     }
 

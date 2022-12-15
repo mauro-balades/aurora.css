@@ -1,0 +1,24 @@
+
+$color: white;
+
+#element {
+    border-top: 2px solid $color;
+
+    &.hey & {
+        border-top-color: red;
+
+        & input.error {
+            border-top-color: red;
+        }
+    }
+
+    $color: red;
+
+    & div {
+        border-top-color!: $color;
+    }
+}
+
+.my-div {
+    background: $color;
+}

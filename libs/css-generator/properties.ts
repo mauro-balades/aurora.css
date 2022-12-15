@@ -15,5 +15,19 @@ export class CSSProperty extends CSS {
 
         this.important = important;
     }
+
+    public toString(): string {
+        let output = `${this.name}:`;
+
+        for (const value of this.values) {
+            output += value.toString();
+        }
+
+        if (this.important) {
+            output += " !important"
+        }
+
+        return output + ";";
+    }
 }
 

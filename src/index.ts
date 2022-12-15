@@ -18,7 +18,7 @@ const main = () => {
         $color: red;
 
         & div {
-            border-top-color: $color;
+            border-top-color!: $color;
         }
     }
 
@@ -34,7 +34,10 @@ const main = () => {
     let nodes = parser.getNodes();
 
     let generator = new Generator(nodes, lexerOutput.source);
-    generator.generate();
+    let builder = generator.generate();
+
+    let output = builder.toString();
+    console.log(output)
 }
 
 
