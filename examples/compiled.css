@@ -1,0 +1,24 @@
+
+/* FILE SECTION: examples/index.aur */
+#element#element.hey #element input.error {
+	border-top-color: red;
+}
+
+#element.hey #element {
+	border-top-color: red;
+}
+
+#element div {
+	border-top-color: red !important;
+}
+
+#element {
+	border-top: 2px solid white;
+}
+
+.my-div {
+	background: white;
+}
+
+
+/* END FILE SECTION: examples/index.aur */
