@@ -9,6 +9,7 @@ export class CSSGenerator {
 
     public add_block(block: CSSRule) {
         this.blocks.push(block);
+        block.genChildren(this);
     }
 
     public toString(): string {

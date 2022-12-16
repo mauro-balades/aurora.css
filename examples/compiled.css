@@ -1,17 +1,17 @@
-#element#element.hey #element input.error {
-	border-top-color: red;
+#element {
+	border-top: 2px solid white;
 }
 
 #element.hey #element {
 	border-top-color: red;
 }
 
-#element div {
-	border-top-color: red !important;
+#element#element.hey #element input.error {
+	border-top-color: red;
 }
 
-#element {
-	border-top: 2px solid white;
+#element div {
+	border-top-color: red !important;
 }
 
 .my-div {

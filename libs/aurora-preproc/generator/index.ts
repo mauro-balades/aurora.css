@@ -192,6 +192,7 @@ export class Generator {
     // generate nodes
     private generate_css_rule(node: CssNode): CSSRule {
         let properties: Array<CSSProperty> = [];
+        let children: Array<CSSRule> = [];
 
         let selector = this.generate_selectors(node.selectors);
         this.state.current_selector_tree.push(selector);
@@ -202,14 +203,19 @@ export class Generator {
     
                 if (result instanceof CSSProperty) {
                     properties.push(result);
+                } else if (result instanceof CSSRule) {
+                    children.push(result);
                 }
             }
         });
 
-        this.state.current_selector_tree.pop();
+        let rule = new CSSRule(selector, properties, children);
 
-        let rule = new CSSRule(selector, properties);
-        this.builder.add_block(rule);
+        this.state.current_selector_tree.pop();
+        if (this.state.current_selector_tree.length === 0) {
+            // TODO: generate child of childs
+            this.builder.add_block(rule);
+        }
 
         return rule;
     }
