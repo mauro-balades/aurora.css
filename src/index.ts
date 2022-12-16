@@ -12,7 +12,7 @@ const main = () => {
         .version('0.1.0')
         .description('Upload files to a database')
         .command('<path1> [morePaths...]')
-        .option('-o, --output [output_file]', 'Output file to render CSS', "out.css")
+        .option('-o, --output [output_file]', 'Output file to render CSS', "")
         .parse(process.argv);
 
     let options = args.opts();
@@ -31,16 +31,25 @@ const main = () => {
         let builder = generator.generate();
     
         let output = builder.toString();
-        combined_files += `\n/* FILE SECTION: ${file} */\n${output}\n/* END FILE SECTION: ${file} */`
+
+        if (args.args.length === 1) {
+            combined_files = output;
+        } else {
+            combined_files += `\n/* ----------------------- */\n${output}\n`
+        }
     }
 
-    fs.writeFile(options.output, combined_files,  function(err) {
-        if (err) {
-            return console.error(err);
-        }
-
-        console.log("Compiled CSS!")
-    });
+    if (options.output === "") {
+        console.log(combined_files)
+    } else {
+        fs.writeFile(options.output, combined_files,  function(err) {
+            if (err) {
+                return console.error(err);
+            }
+    
+            console.log("Compiled CSS!")
+        });
+    }
 }
 
 
