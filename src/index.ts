@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Generator, Lexer, Parser } from "../libs/aurora-preproc";
+import AuroraCSS, { Generator, Lexer, Parser } from "../libs/aurora-preproc";
 
 import {Command} from 'commander';
 import * as fs from 'fs';
@@ -20,17 +20,8 @@ const main = () => {
     let combined_files = "";
     for (const file of args.args) {
         let content = fs.readFileSync(file,'utf8');
-
-        let lexer = new Lexer({ content });
-        let lexerOutput = lexer.tokenize();
-    
-        let parser = new Parser(lexerOutput)
-        let nodes = parser.getNodes();
-    
-        let generator = new Generator(nodes, lexerOutput.source);
-        let builder = generator.generate();
-    
-        let output = builder.toString();
+        let generator = new AuroraCSS(content);
+        let output = generator.generate();
 
         if (args.args.length === 1) {
             combined_files = output;
