@@ -7,9 +7,10 @@ import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
 import { LookAhead } from "./look_ahead";
-import { IdentifierValue } from "../nodes/types/values";
+import { FunctionCallValue, IdentifierValue, StringValue } from "../nodes/types/values";
 import { PseudoSelector } from "../selectors/pseudo";
 import { VariableValue } from "../nodes/types/values/variable";
+import { assert } from "console";
 
 export default class {
     private readonly source: Source;
@@ -168,7 +169,7 @@ export default class {
         }
     }
 
-    private peek(offset: number = 0): Token {
+    private peek(offset: number = 1): Token {
         try {
             return this.tokens[this.token_index + offset]
         } catch(_) {
@@ -252,7 +253,7 @@ export default class {
         this.consume(TokenType.SYM_COLLON, ":")
 
         let properties: Array<Value> = [];
-        if (this.peek().type === TokenType.SYM_SEMI_COLLON) {
+        if (this.current_token.type === TokenType.SYM_SEMI_COLLON) {
             this.parser_error(messages.empty_property, this.next().pos)
         }
 
@@ -277,13 +278,18 @@ export default class {
             }
 
             return new VariableValue(this.current_token.toString(), this.current_token.pos)
-        } else if (this.current_token.type === TokenType.IDENTIFIER && this.peek().type === TokenType.BRACKET_LPARENT) {
-            throw Error("TODO: function calls");
+        } else if (this.current_token.type === TokenType.IDENTIFIER && this.peek(1).type === TokenType.BRACKET_LPARENT) {
+            let caller = this.current_token.toString();
+
+            this.next();
+            let args = this._parse_arguments();
+
+            return new FunctionCallValue(caller, args, this.current_token.pos);
         } else if (this.current_token.type === TokenType.IDENTIFIER) {
             // TODO: also parse numbers (.2px, 9.1, 7rem, ...)
             return new IdentifierValue(this.current_token.toString(), this.current_token.pos)
         } else if (this.current_token.type === TokenType.VALUE_STRING) {
-            throw Error("TODO: string value");
+            return new StringValue(this.current_token.toString(), this.current_token.pos)
         } else if (this.current_token.type === TokenType.SYM_HASH) {
             throw Error("TODO: hex values");
         }
@@ -404,6 +410,7 @@ export default class {
 
     private _parse_arguments(): FunctionArgument[] {
         let params: Array<FunctionArgument> = []
+        assert(this.current_token.type === TokenType.BRACKET_LPARENT)
 
         while (true) {
             if (this.isEof(this.current_token)) {
@@ -411,7 +418,6 @@ export default class {
             }
 
             this.next()
-
             if (this.current_token.type === TokenType.BRACKET_RPARENT) {
                 break;
             } else {

@@ -19,8 +19,9 @@ const main = () => {
 
     let combined_files = "";
     for (const file of args.args) {
-        let content = fs.readFileSync(file,'utf8');
-        let generator = new AuroraCSS(content);
+        let source = fs.readFileSync(file,'utf8');
+
+        let generator = new AuroraCSS({ source });
         let output = generator.generate();
 
         if (args.args.length === 1) {

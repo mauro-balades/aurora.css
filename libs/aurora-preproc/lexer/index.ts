@@ -126,12 +126,14 @@ export default class {
                     break;
                 }
     
+                case '\'':
                 case '"': {
                     let current_pos = this.pos;
+                    let quote = this.get();
                     this.eat();
 
                     let str = "";
-                    while (this.get() != '"') {
+                    while (this.get() != quote) {
                         if (this.get() == '\\') {
                             let c = this.get(1);
     
@@ -141,6 +143,7 @@ export default class {
                                 case 't':  str += '\t'; this.eat(1); break;
                                 case 'n':  str += '\n'; this.eat(1); break;
                                 case '"':  str += '"';  this.eat(1); break;
+                                case '\'':  str += '\'';  this.eat(1); break;
                                 case 'r':  str += '\r'; this.eat(1); break;
                                 case '\n': this.eat(); this.consume_line(); break;
                             }
@@ -154,7 +157,7 @@ export default class {
                     this.eat()
 
                     let token = new Token(TokenType.VALUE_STRING, { col: current_pos.col, line: current_pos.line });
-                    token.value = str;
+                    token.value = `${quote}${str}${quote}`;
 
                     this.tokens.push(token);
     

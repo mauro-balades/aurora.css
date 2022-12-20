@@ -1,8 +1,10 @@
 import { CSSValue } from "../../css-generator/value";
+import { Value } from "../nodes";
 
 
 export type ScopeList = Scope[];
-export type ScopeValue = Array<CSSValue>;
+export type NativeFunction = (generator: Generator, node: Value, ...args: any) => CSSValue;
+export type ScopeValue = CSSValue[] | NativeFunction;
 export type ScopeMap = Map<string, ScopeValue>;
 
 export class Scope {
@@ -27,5 +29,4 @@ export class Scope {
     public static default_map(): ScopeMap {
         return new Map<string, ScopeValue>();
     }
-
 }

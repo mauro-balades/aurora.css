@@ -1,6 +1,9 @@
 import Lexer from "./lexer";
 import Parser from "./parser"
 import {Generator} from "./generator"
+import { Enviroment } from "./enviroment";
+
+import registerFunctions from "./functions";
 
 export {default as Lexer} from "./lexer";
 export {default as Parser} from "./parser";
@@ -9,11 +12,15 @@ export {Source} from "./source";
 export {Symbols} from "./symbols";
 export {Generator} from "./generator";
 
+export interface AuroraCSSOptions {
+    source: string
+};
+
 export default class {
     private readonly content: string;
 
-    constructor(content: string) {
-        this.content = content;
+    constructor({source}: AuroraCSSOptions) {
+        this.content = source;
     }
 
     public generate(): string {
@@ -24,7 +31,10 @@ export default class {
         let parser = new Parser(lexerOutput)
         let nodes = parser.getNodes();
 
-        let generator = new Generator(nodes, lexerOutput.source);
+        let enviroment = new Enviroment();
+        registerFunctions(enviroment)
+
+        let generator = new Generator(nodes, lexerOutput.source, enviroment);
         let builder = generator.generate();
 
         return builder.toString();

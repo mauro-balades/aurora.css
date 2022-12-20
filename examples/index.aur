@@ -20,5 +20,5 @@ $color: white;
 }
 
 .my-div {
-    background: $color;
+    background-image: unquote("hey");
 }

@@ -4,7 +4,9 @@ import { Position } from "../../position";
 
 export enum ValueType {
     Identifier,
-    Variable
+    Variable,
+    FunctionCall,
+    String
 };
 
 export class Value extends Node {

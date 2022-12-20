@@ -1,11 +1,11 @@
 import { Position } from "../../../position";
 import { Value, ValueType } from "../value";
 
-export class IdentifierValue extends Value {
+export class StringValue extends Value {
     public readonly value: string;
 
     constructor(value: string, pos: Position) {
-        super(ValueType.Identifier, pos);
+        super(ValueType.String, pos);
         this.value = value;
     }
 }

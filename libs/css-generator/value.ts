@@ -18,11 +18,11 @@ export class CSSValue extends CSS {
         this.value = value;
     }
 
-    public toString(): string {
+    public toString(with_space: boolean = true): string {
         if (this.type === CSSValueType.CssOutput) {
-            return " " + this.value as string;
+            return (with_space ? " " : "") + this.value as string;
         } else if (this.type === CSSValueType.CssValueList) {
-            let values = this.value as ScopeValue;
+            let values = this.value as CSSValue[];
             let output = "";
 
             for (let i = 0; i < values.length; i++) {

@@ -2,10 +2,10 @@ import { CSS, CSSGenerator, CSSProperty, CSSRule } from "../../css-generator";
 import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
 import { Enviroment } from "../enviroment";
-import { ScopeValue } from "../enviroment/scopes";
+import { ScopeValue, NativeFunction } from "../enviroment/scopes";
 import { CssNode, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
 import { ValueType } from "../nodes/types/value";
-import { IdentifierValue, VariableValue } from "../nodes/types/values";
+import { FunctionCallValue, IdentifierValue, StringValue, VariableValue } from "../nodes/types/values";
 import { Position } from "../position";
 import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
@@ -22,12 +22,12 @@ export class Generator {
         current_selector_tree: ([] as Array<string>)
     };
 
-    constructor(nodes: Node[], source: Source) {
+    constructor(nodes: Node[], source: Source, enviroment: Enviroment) {
         this.nodes = nodes;
         this.source = source;
 
         this.builder = new CSSGenerator();
-        this.enviroment = new Enviroment();
+        this.enviroment = enviroment;
     }
 
     // error handling
@@ -171,7 +171,7 @@ export class Generator {
         return result;
     }
 
-    private generate_css_value(node: Value): CSSValue | undefined {
+    public generate_css_value(node: Value): CSSValue | undefined {
         if (node.value_type === ValueType.Identifier) {
             let identifier = node as IdentifierValue;
             return new CSSValue(CSSValueType.CssOutput, identifier.value);
@@ -184,9 +184,25 @@ export class Generator {
             }
 
             return new CSSValue(CSSValueType.CssValueList, variable as ScopeValue);
+        } else if (node.value_type === ValueType.FunctionCall) {
+            let call = node as FunctionCallValue;
+
+            // TODO: user defined functions
+            let fn = this.enviroment.get(call.callee);
+
+            if (typeof fn === "undefined") {
+                this.throw_error(messages.undefined_variable(call.callee), node.pos);
+            } else if (typeof fn === "function") {
+                return (fn as NativeFunction)(this as any, node, (node as FunctionCallValue).args);
+            }
+
+            this.throw_error("(TODO): User-defined functions", node.pos)
+            // return new CSSValue(CSSValueType.CssOutput, identifier.value);
+        }  else if (node.value_type === ValueType.String) {
+            return new CSSValue(CSSValueType.CssOutput, (node as StringValue).value);
         }
 
-        this.throw_error("(BUG): undefined value not handled!", node.pos);
+        this.throw_error(`(BUG): undefined value not handled! (type: ${node.value_type})`, node.pos);
     }
 
     // generate nodes
