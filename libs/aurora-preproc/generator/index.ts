@@ -193,7 +193,8 @@ export class Generator {
             if (typeof fn === "undefined") {
                 this.throw_error(messages.undefined_variable(call.callee), node.pos);
             } else if (typeof fn === "function") {
-                return (fn as NativeFunction)(this as any, node, (node as FunctionCallValue).args);
+                let args = (node as FunctionCallValue).args.map((value: Node) => this.generate(value));
+                return (fn as NativeFunction).call(this as any, node, args);
             }
 
             this.throw_error("(TODO): User-defined functions", node.pos)
