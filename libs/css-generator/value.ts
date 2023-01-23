@@ -11,11 +11,15 @@ export class CSSValue extends CSS {
     private readonly type: CSSValueType;
     private readonly value: string | ScopeValue;
 
-    constructor(type: CSSValueType, value: string | ScopeValue) {
+    public readonly isString: boolean = false;
+
+    constructor(type: CSSValueType, value: string | ScopeValue, isString: boolean = false) {
         super();
 
         this.type = type;
         this.value = value;
+
+        this.isString = isString;
     }
 
     public toString(with_space: boolean = true): string {

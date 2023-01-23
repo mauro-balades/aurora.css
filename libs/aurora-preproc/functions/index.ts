@@ -21,13 +21,15 @@ const unquote = (builder: Generator, node: FunctionCallValue, ...args: any): CSS
         builder.throw_error("Expected just 1 argument for unquote().", node.pos);
     }
 
-    let arg = args[0][0];
-    if (arg.value_type !== ValueType.String) {
-        builder.throw_error("Expected a string value unquote().", arg.pos);
+    let arg = args[0][0];   
+    let compiled = builder.generate_css_value(arg) as CSSValue;
+
+    let val: string = compiled.toString(false);
+    if (compiled.isString) {
+        val = val.slice(1, -1);
     }
 
-    let compiled = builder.generate_css_value(arg) as CSSValue;
-    return new CSSValue(CSSValueType.CssOutput, compiled.toString(false).slice(1, -1));
+    return new CSSValue(CSSValueType.CssOutput, val);
 }
 
 export default (env: Enviroment) => {
