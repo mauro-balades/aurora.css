@@ -3,7 +3,7 @@ import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
 import { Enviroment } from "../enviroment";
 import { ScopeValue, NativeFunction } from "../enviroment/scopes";
-import { CssNode, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
+import { CssNode, FunctionArgument, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
 import { ValueType } from "../nodes/types/value";
 import { FunctionCallValue, IdentifierValue, StringValue, VariableValue } from "../nodes/types/values";
 import { Position } from "../position";
@@ -199,7 +199,7 @@ export class Generator {
             this.throw_error("(TODO): User-defined functions", node.pos)
             // return new CSSValue(CSSValueType.CssOutput, identifier.value);
         }  else if (node.value_type === ValueType.String) {
-            return new CSSValue(CSSValueType.CssOutput, (node as StringValue).value);
+            return new CSSValue(CSSValueType.CssOutput, (node as StringValue).value, true);
         }
 
         this.throw_error(`(BUG): undefined value not handled! (type: ${node.value_type})`, node.pos);

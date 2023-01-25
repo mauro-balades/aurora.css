@@ -1,5 +1,6 @@
 
 $color: white;
+$thing: "hey";
 
 @function hey() {
 
@@ -24,5 +25,5 @@ $color: white;
 }
 
 .my-div {
-    background-image: unquote("hey");
+    background-image: unquote($thing);
 }
