@@ -4,6 +4,7 @@ import {Generator} from "./generator"
 import { Enviroment } from "./enviroment";
 
 import registerFunctions from "./functions";
+import registerAtRules from "./at-rules";
 
 export {default as Lexer} from "./lexer";
 export {default as Parser} from "./parser";
@@ -28,11 +29,12 @@ export default class {
         let lexer = new Lexer({ content: this.content });
         let lexerOutput = lexer.tokenize();
 
-        let parser = new Parser(lexerOutput)
-        let nodes = parser.getNodes();
-
         let enviroment = new Enviroment();
         registerFunctions(enviroment)
+        registerAtRules(enviroment)
+
+        let parser = new Parser(lexerOutput, enviroment)
+        let nodes = parser.getNodes();
 
         let generator = new Generator(nodes, lexerOutput.source, enviroment);
         let builder = generator.generate();

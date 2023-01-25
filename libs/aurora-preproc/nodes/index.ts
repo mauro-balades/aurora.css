@@ -9,6 +9,8 @@ export enum NodeType {
 
     Value,
     VariableDecl,
+
+    AtRule,
 }
 
 export type Block = Node[];

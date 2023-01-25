@@ -1,10 +1,25 @@
+import { AtRuleBase } from "../at-rules";
 import { Scope, ScopeList, ScopeValue } from "./scopes";
 
 export class Enviroment {
     private scopes: ScopeList = [];
+    private atRules: AtRuleBase[] = [];
 
     constructor(global_variables = Scope.default_map()) {
         this.scopes.push(new Scope(global_variables));
+    }
+
+    public getAtRule(name: String): AtRuleBase | undefined {
+        return this.atRules.find(x => x.name == name);
+    }
+
+    public addAtRule(atRule: AtRuleBase): void {
+
+        if (this.getAtRule(atRule.name) != undefined) {
+            throw Error(`(BUG): At rule with name "${atRule.name}" is already declared!`);
+        }
+
+        this.atRules.push(atRule);
     }
 
     public get(name: string): ScopeValue | undefined {

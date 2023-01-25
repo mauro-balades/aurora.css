@@ -11,6 +11,9 @@ import { FunctionCallValue, IdentifierValue, StringValue } from "../nodes/types/
 import { PseudoSelector } from "../selectors/pseudo";
 import { VariableValue } from "../nodes/types/values/variable";
 import { assert } from "console";
+import { AtRuleDeclaration } from "../nodes/types/atRule";
+import { Enviroment } from "../enviroment";
+import { AtRuleBase } from "../at-rules";
 
 export default class {
     private readonly source: Source;
@@ -21,6 +24,7 @@ export default class {
     private token_index: number = 0;
     private current_token!: Token;
 
+    private readonly enviroment: Enviroment;
     private readonly valid_selectors = [
         TokenType.IDENTIFIER,
         TokenType.OP_MUL,
@@ -31,12 +35,11 @@ export default class {
         TokenType.SYM_DOT,
     ];
 
-    // TODO: AtRule class
-    private readonly at_rules: Array<any> = [];
-
-    constructor(lexRes: LexerOutput) {
+    constructor(lexRes: LexerOutput, env: Enviroment) {
         this.source = lexRes.source;
         this.tokens = lexRes.tokens;
+
+        this.enviroment = env;
     }
 
     public getNodes(): Array<Node> {
@@ -99,6 +102,13 @@ export default class {
                     break;
                 }
 
+                case TokenType.SYM_AT: {
+                    let decl = this._parse_at_rule();
+                    this.nodes.push(decl);
+
+                    break;
+                }
+
                 default: {
                     this.parser_error(messages.undefined_token(this.current_token));
                 }
@@ -116,27 +126,32 @@ export default class {
                 this.parser_error(messages.unexpected_eof);
             }
 
-            let look_ahead = this._look_for_value();
-            if (look_ahead === LookAhead.CssSelector) {
-                let selectors: Array<Selector[]> = [];
-                let pos = this.current_token.pos;
-
-                do {
-                    let selector = this._parse_selectors();
-                    selectors.push(selector)
-                } while (this.current_token.type === (TokenType.SYM_COMMA as TokenType));
-
-                let block = this.parse_css_block();
-
-                let node = new CssNode(selectors, block, pos);
-                nodes.push(node);
-            } else if (look_ahead === LookAhead.CssProperty) {
-                if (this.current_token.type === TokenType.SYM_DOLLAR) {
-                    let decl = this._parse_variable_decl();
-                    nodes.push(decl);
-                } else {
-                    let prop = this._parse_property();
-                    nodes.push(prop);
+            if (this.current_token.type == TokenType.SYM_AT) {
+                let decl = this._parse_at_rule();
+                nodes.push(decl);
+            } else {
+                let look_ahead = this._look_for_value();
+                if (look_ahead === LookAhead.CssSelector) {
+                    let selectors: Array<Selector[]> = [];
+                    let pos = this.current_token.pos;
+    
+                    do {
+                        let selector = this._parse_selectors();
+                        selectors.push(selector)
+                    } while (this.current_token.type === (TokenType.SYM_COMMA as TokenType));
+    
+                    let block = this.parse_css_block();
+    
+                    let node = new CssNode(selectors, block, pos);
+                    nodes.push(node);
+                } else if (look_ahead === LookAhead.CssProperty) {
+                    if (this.current_token.type === TokenType.SYM_DOLLAR) {
+                        let decl = this._parse_variable_decl();
+                        nodes.push(decl);
+                    } else {
+                        let prop = this._parse_property();
+                        nodes.push(prop);
+                    }
                 }
             }
         }
@@ -147,21 +162,21 @@ export default class {
     }
 
     // helper functions
-    private next(): Token {
+    public next(): Token {
         this.token_index++;
         this.current_token = this.tokens[this.token_index];
 
         return this.current_token;
     }
 
-    private previous(): Token {
+    public previous(): Token {
         this.token_index--;
         this.current_token = this.tokens[this.token_index];
 
         return this.current_token;
     }
 
-    private consume(ty: TokenType, idnt: string): void {
+    public consume(ty: TokenType, idnt: string): void {
         if (this.current_token.type === ty) {
             this.next();
         } else {
@@ -169,7 +184,7 @@ export default class {
         }
     }
 
-    private peek(offset: number = 1): Token {
+    public peek(offset: number = 1): Token {
         try {
             return this.tokens[this.token_index + offset]
         } catch(_) {
@@ -177,8 +192,12 @@ export default class {
         }
     }
 
+    public get token() {
+        return this.current_token;
+    }
+
     // error handling
-    private parser_error(message: string, pos: Position | undefined = undefined) {
+    public parser_error(message: string, pos: Position | undefined = undefined): void {
         if (typeof pos === "undefined") {
             pos = this.current_token.pos;
         }
@@ -215,6 +234,21 @@ export default class {
     }
 
     // parsing methods
+
+    private _parse_at_rule(): AtRuleDeclaration {
+        let name = this.next().toString();
+        let pos = this.current_token.pos;
+
+        let rule = this.enviroment.getAtRule(name);
+
+        if (typeof rule === "undefined") {
+            this.parser_error(`Undefined at rule with name "${name}"`, pos);
+            throw Error(""); // make ts stfu
+        }
+
+        rule.parse(this);
+        return new AtRuleDeclaration(rule, pos);
+    }
 
     private _parse_variable_decl(): VariableDeclaration {
         let pos = this.current_token.pos;

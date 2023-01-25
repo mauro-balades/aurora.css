@@ -1,6 +1,10 @@
 
 $color: white;
 
+@function hey() {
+
+}
+
 #element {
     border-top: 2px solid $color;
 
