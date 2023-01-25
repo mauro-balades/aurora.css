@@ -7,16 +7,17 @@ export default class extends AtRuleBase {
     public override readonly name = "function";
 
     public override parse(parser: Parser) {
-        parser.next();
+        parser.next(); // Parse "@"
 
         let name = parser.token.toString();
         parser.consume(TokenType.IDENTIFIER, "an identifier");
 
         parser.consume(TokenType.BRACKET_LPARENT, "'('")
-        // TODO: arguments
+        // TODO: args
         parser.consume(TokenType.BRACKET_RPARENT, "')'")
 
         parser.consume(TokenType.BRACKET_LCURLY, "'{'")
+        parser.consume(TokenType.BRACKET_RCURLY, "'}'")
 
     }
 
