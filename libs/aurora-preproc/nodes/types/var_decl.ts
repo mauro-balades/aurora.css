@@ -1,6 +1,7 @@
 
-import { Node, NodeType, Value } from "..";
+import { Node, NodeType } from "..";
 import { Position } from "../../position";
+import { Value } from "./value";
 
 export class VariableDeclaration extends Node {
     public readonly name: string;

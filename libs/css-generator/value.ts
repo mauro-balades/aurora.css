@@ -1,4 +1,5 @@
 
+import { GenerationOptions } from ".";
 import { ScopeValue } from "../aurora-preproc/enviroment/scopes";
 import { CSS } from "./css";
 
@@ -22,16 +23,16 @@ export class CSSValue extends CSS {
         this.isString = isString;
     }
 
-    public toString(with_space: boolean = true): string {
+    public toString(options: GenerationOptions): string {
         if (this.type === CSSValueType.CssOutput) {
-            return (with_space ? " " : "") + this.value as string;
+            return this.value as string;
         } else if (this.type === CSSValueType.CssValueList) {
             let values = this.value as CSSValue[];
             let output = "";
 
             for (let i = 0; i < values.length; i++) {
                 const subvalue = values[i];
-                output += subvalue.toString();
+                output += subvalue.toString(options);
 
                 if (i < (values.length - 1)) {
                     output += " ";

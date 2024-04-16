@@ -1,4 +1,4 @@
-import { Block, Node, NodeType } from "..";
+import { Block, Node, NodeType } from "../index";
 import { Position } from "../../position";
 import { Selector } from "../../selectors";
 

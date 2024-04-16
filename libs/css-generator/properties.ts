@@ -1,5 +1,6 @@
 import { CSSValue } from "./value";
 import { CSS } from "./css";
+import { GenerationOptions } from ".";
 
 export class CSSProperty extends CSS {
     private readonly name: string;
@@ -16,15 +17,23 @@ export class CSSProperty extends CSS {
         this.important = important;
     }
 
-    public toString(): string {
+    public toString(options: GenerationOptions): string {
         let output = `${this.name}:`;
 
+        let i = 0;
         for (const value of this.values) {
-            output += value.toString();
+            output += value.toString(options);
+            if (i < this.values.length - 1) {
+                // We must add a space here because the CSSValueList is a list of values
+                // example: border: 1px solid red; <- the space is between 1px and solid
+                //   is needed to separate the values, avoiding having a value like "1pxsolid"
+                output += " ";
+            }
+            i++;
         }
 
         if (this.important) {
-            output += " !important"
+            output += (options.minify_output ? "" : " ") + "!important"
         }
 
         return output + ";";

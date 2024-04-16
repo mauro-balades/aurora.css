@@ -1,9 +1,10 @@
-import { CSS, CSSGenerator, CSSProperty, CSSRule } from "../../css-generator";
+import { CSS, CSSGenerator, CSSProperty, CSSRule, GenerationOptions } from "../../css-generator";
 import { CSSValue, CSSValueType } from "../../css-generator/value";
 import { messages } from "../diagnostics";
 import { Enviroment } from "../enviroment";
 import { ScopeValue, NativeFunction } from "../enviroment/scopes";
-import { CssNode, FunctionArgument, Node, NodeType, Property, Value, VariableDeclaration } from "../nodes";
+import { Node, NodeType } from "../nodes";
+import { CssNode, Property, Value, VariableDeclaration } from "../nodes/types";
 import { ValueType } from "../nodes/types/value";
 import { FunctionCallValue, IdentifierValue, StringValue, VariableValue } from "../nodes/types/values";
 import { Position } from "../position";
@@ -16,18 +17,20 @@ export class Generator {
     private readonly source: Source;
 
     private readonly enviroment: Enviroment;
+    private readonly gen_opts: GenerationOptions;
 
     private readonly builder: CSSGenerator;
     private state = {
         current_selector_tree: ([] as Array<string>)
     };
 
-    constructor(nodes: Node[], source: Source, enviroment: Enviroment) {
+    constructor(nodes: Node[], source: Source, enviroment: Enviroment, opts: GenerationOptions) {
         this.nodes = nodes;
         this.source = source;
 
         this.builder = new CSSGenerator();
         this.enviroment = enviroment;
+        this.gen_opts = opts;
     }
 
     // error handling
@@ -54,6 +57,8 @@ export class Generator {
             return this.generate_css_property(node as Property);
         } else if (node.type === NodeType.VariableDecl) {
             return this.generate_var_declaration(node as VariableDeclaration);
+        } else if (node.type === NodeType.Value) {
+            return this.generate_css_value(node as Value);
         }
 
         this.throw_error(`(BUG) unhandled node found: ${node.type}`, node.pos)
@@ -63,7 +68,15 @@ export class Generator {
     private get_parent_selector(): string {
         let res = "";
 
+        let i = 0;
         for (const selector of this.state.current_selector_tree) {
+            // We need to prepend a space if we have multiple selectors, but not for the first one
+            // e.g. .class1 .class2 .class3 { ... } -> .class1 .class2 .class3
+            // if we didn't do this, we would have ".class1.class2.class3"
+            if (i > 0) {
+                res += " ";
+            }
+            i++;
             res += selector;
         }
 
@@ -100,8 +113,19 @@ export class Generator {
                     for (let i = 0; i < pseudo.arguments.length; i++) {
                         let value = pseudo.arguments[i];
 
-                        // TODO: add value to function
-                        this.throw_error("TODO: pseudo selector arguments", selector.pos)
+                        if (value instanceof Node) {
+                            result += this.generate_node(value);
+                        } else {
+                            let i = 0;
+                            for (const arg of value) {
+                                console.assert(arg instanceof Selector, "Expected Selector, got something else!");
+                                result += this.generate_selector(arg as Selector);
+                                if (i < (value.length - 1)) {
+                                    result += "," + (this.gen_opts.minify_output ? "" : " ");
+                                }
+                                i++;
+                            }
+                        }
 
                         if (i < (pseudo.arguments.length - 1)) {
                             result += `,`;
@@ -193,7 +217,7 @@ export class Generator {
             if (typeof fn === "undefined") {
                 this.throw_error(messages.undefined_variable(call.callee), node.pos);
             } else if (typeof fn === "function") {
-                return (fn as NativeFunction)(this as any, node, (node as FunctionCallValue).args);
+                return (fn as NativeFunction)(this as any, node, this.gen_opts, (node as FunctionCallValue).args);
             }
 
             this.throw_error("(TODO): User-defined functions", node.pos)

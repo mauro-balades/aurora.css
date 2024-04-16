@@ -1,6 +1,6 @@
 import { CSSProperty } from "./properties";
 import { CSS } from "./css";
-import { CSSGenerator } from ".";
+import { CSSGenerator, GenerationOptions } from ".";
 
 export class CSSRule extends CSS {
     private properties: CSSProperty[] = [];
@@ -23,18 +23,23 @@ export class CSSRule extends CSS {
         }
     }
 
-    public toString(): string {
+    public toString(options: GenerationOptions): string {
         let output = "";
+        if (this.properties.length === 0 && options.skip_empty_blocks) {
+            return output;
+        }
+        const newLine = options.minify_output ? "" : "\n";
+        const tab = options.minify_output ? "" : "\t";
+        const space = options.minify_output ? "" : " ";
 
         output += this.selector;
-        output += " {\n";
+        output += space + "{" + newLine;
 
         for (const property of this.properties) {
-            output += "\t" + property.toString();
+            output += tab + property.toString(options);
         }
 
-        output += "\n}\n";
-
+        output += newLine + "}" + newLine;
         return output;
     }
 }

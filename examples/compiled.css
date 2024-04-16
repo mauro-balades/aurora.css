@@ -15,6 +15,6 @@
 }
 
 .my-div {
-	background-image: Microsoft:something.wtf-is-going-on::ok;
+	background-image: unquote("Microsoft:something.wtf-is-going-on::ok");
 }
 

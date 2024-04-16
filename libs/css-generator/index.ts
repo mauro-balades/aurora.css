@@ -1,6 +1,10 @@
 import { CSSRule } from "./css-rules";
 
 export type CSSBody = Array<CSSRule>;
+export interface GenerationOptions {
+    minify_output: boolean;
+    skip_empty_blocks: boolean;
+}
 
 export class CSSGenerator {
     private blocks: CSSBody = [];
@@ -12,10 +16,10 @@ export class CSSGenerator {
         block.genChildren(this);
     }
 
-    public toString(): string {
+    public toString(options: GenerationOptions): string {
         let output = "";
         for (const block of this.blocks) {
-            output += block.toString() + "\n";
+            output += block.toString(options) + (options.minify_output ? "" : "\n");
         }
 
         return output;

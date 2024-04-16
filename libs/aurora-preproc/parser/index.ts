@@ -2,7 +2,8 @@ import { LexerOutput } from "../lexer/interfaces";
 import { Source } from "../source";
 import { Token, TokenType } from "../tokens";
 
-import { Block, CssNode, FunctionArgument, Node, Property, Value, VariableDeclaration } from "../nodes";
+import { Block, FunctionArgument, Node } from "../nodes";
+import { Property, Value, VariableDeclaration, CssNode } from "../nodes/types";
 import { Position } from "../position";
 import { Selector, SelectorType } from "../selectors";
 import { messages } from "../diagnostics";
@@ -13,7 +14,7 @@ import { VariableValue } from "../nodes/types/values/variable";
 import { assert } from "console";
 import { AtRuleDeclaration } from "../nodes/types/atRule";
 import { Enviroment } from "../enviroment";
-import { AtRuleBase } from "../at-rules";
+import { CSSPseudoSyntaxType, deduceFromName } from "./css_pseudo";
 
 export default class {
     private readonly source: Source;
@@ -331,14 +332,14 @@ export default class {
         this.parser_error(messages.undefined_token(this.current_token))
     }
 
-    private _parse_selectors(trailing: boolean = false): Array<Selector>  {
+    private _parse_selectors(trailing: boolean = false, terminator: TokenType = TokenType.BRACKET_LCURLY): Array<Selector>  {
         let selectors: Array<Selector> = [];
 
-        if (this.current_token.type === TokenType.BRACKET_LCURLY) {
+        if (this.current_token.type === terminator) {
             this.parser_error(messages.unexpected_token("valid selector", this.current_token));
         }
 
-        while (this.current_token.type !== TokenType.BRACKET_LCURLY) {
+        while (this.current_token.type !== terminator) {
             let token = this.current_token;
             let selector: Selector;
 
@@ -349,18 +350,18 @@ export default class {
                 let element = token.toString();
 
                 selector = new Selector(SelectorType.Element, element, token.pos);
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
 
                 this.next();
 
             } else if (token.type === TokenType.OP_MUL) {
                 selector = new Selector(SelectorType.SelectAll, "*", token.pos);
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
 
                 this.next();
             } else if (token.type === TokenType.SYM_COLLON) {
                 selector = this._parse_pseudo();
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
 
                 this.next();
             } else if (token.type === TokenType.BRACKET_LSQUARED) {
@@ -375,7 +376,7 @@ export default class {
                 let id = token.toString();
 
                 selector = new Selector(SelectorType.ID, id, token.pos);
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
 
                 this.next();
 
@@ -390,16 +391,20 @@ export default class {
 
                 selector = new Selector(SelectorType.Class, id, token.pos);
 
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
                 this.next();
 
             } else if (token.type === TokenType.OP_BIT_AND) {
                 selector = new Selector(SelectorType.Parent, "&", token.pos);
-                selector.with = this._parse_same_element();
+                selector.with = this._parse_same_element(terminator);
 
                 this.next();
+            } else if (token.type === TokenType.SYM_COMMA) {
+                this.next();
+                selectors = [...selectors, ...this._parse_selectors(false, terminator)];
+                break;
             } else {
-                this.parser_error(`BUG in selector parser! (token: "${token.toString()}")`);
+                this.parser_error(messages.unexpected_token("a valid selector character", token));
             }
 
             // @ts-ignore
@@ -429,10 +434,18 @@ export default class {
         let name = this.current_token.toString();
         this.next();
 
-        let args: Array<FunctionArgument> = []
+        let args: Array<FunctionArgument> = [];
+        let pseudoType: CSSPseudoSyntaxType = deduceFromName(name);
         if (this.current_token.type === TokenType.BRACKET_LPARENT) {
-            args = this._parse_arguments();
+            if (pseudoType === 'NoArgument') {
+                this.parser_error(messages.unexpected_token("no arguments", this.current_token));
+            }
+            args = this._parse_arguments(pseudoType === 'Selector');
             this.consume(TokenType.BRACKET_RPARENT, ")")
+        } else {
+            if (pseudoType !== 'NoArgument') {
+                this.parser_error(messages.unexpected_token("(", this.current_token));
+            }
         }
 
         let selector = new PseudoSelector(name, pos, args);
@@ -442,7 +455,7 @@ export default class {
         return selector;
     }
 
-    private _parse_arguments(): FunctionArgument[] {
+    private _parse_arguments(allow_selectors: boolean = false): FunctionArgument[] {
         let params: Array<FunctionArgument> = []
         assert(this.current_token.type === TokenType.BRACKET_LPARENT)
 
@@ -455,10 +468,18 @@ export default class {
             if (this.current_token.type === TokenType.BRACKET_RPARENT) {
                 break;
             } else {
-                let param = this._parse_value();
-                params.push(param);
-
-                if ((this.current_token.type === TokenType.SYM_COMMA) || (this.current_token.type === TokenType.BRACKET_LPARENT)) {
+                if (allow_selectors) {
+                    let selectors = this._parse_selectors(false, TokenType.BRACKET_RPARENT);
+                    params.push(selectors); // _parse_selectors consumes the closing bracket
+                } else {
+                    let param = this._parse_value();
+                    params.push(param);
+                    this.next();
+                }
+                if ((this.current_token.type !== TokenType.SYM_COMMA) && (this.current_token.type as TokenType !== TokenType.BRACKET_RPARENT)) {
+                    this.parser_error(messages.unexpected_token("',' or ')'", this.current_token));
+                }
+                if (this.current_token.type as TokenType === TokenType.BRACKET_RPARENT) {
                     this.previous();
                 }
             }
@@ -467,7 +488,7 @@ export default class {
         return params;
     }
 
-    private _parse_same_element(): Array<Selector> {
+    private _parse_same_element(terminator: TokenType): Array<Selector> {
         let res: Array<Selector> = [];
 
         let last_token = this.current_token;
@@ -485,8 +506,10 @@ export default class {
                 res.push(...selectors);
                 this.previous();
 
-            } else {
+            } else if (token.type !== TokenType.SYM_COMMA && token.type !== terminator) {
                 this.parser_error(messages.unexpected_token("a valid selector character", token))
+            } else {
+                this.previous();
             }
         } else {
             this.previous();

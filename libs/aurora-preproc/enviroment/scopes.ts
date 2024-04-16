@@ -1,9 +1,9 @@
+import { GenerationOptions } from "../../css-generator";
 import { CSSValue } from "../../css-generator/value";
-import { Value } from "../nodes";
-
+import { Value } from "../nodes/types";
 
 export type ScopeList = Scope[];
-export type NativeFunction = (generator: Generator, node: Value, ...args: any) => CSSValue;
+export type NativeFunction = (generator: Generator, node: Value, gen_opts: GenerationOptions, ...args: any) => CSSValue;
 export type ScopeValue = CSSValue[] | NativeFunction;
 export type ScopeMap = Map<string, ScopeValue>;
 

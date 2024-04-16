@@ -5,6 +5,7 @@ import { Enviroment } from "./enviroment";
 
 import registerFunctions from "./functions";
 import registerAtRules from "./at-rules";
+import { GenerationOptions } from "../css-generator";
 
 export {default as Lexer} from "./lexer";
 export {default as Parser} from "./parser";
@@ -14,14 +15,20 @@ export {Symbols} from "./symbols";
 export {Generator} from "./generator";
 
 export interface AuroraCSSOptions {
-    source: string
+    source: string;
+    output_options?: GenerationOptions;
 };
 
 export default class {
     private readonly content: string;
+    private readonly output_options: GenerationOptions;
 
-    constructor({source}: AuroraCSSOptions) {
+    constructor({source, output_options}: AuroraCSSOptions) {
         this.content = source;
+        this.output_options = output_options || {
+            minify_output: true,
+            skip_empty_blocks: true
+        };
     }
 
     public generate(): string {
@@ -36,9 +43,9 @@ export default class {
         let parser = new Parser(lexerOutput, enviroment)
         let nodes = parser.getNodes();
 
-        let generator = new Generator(nodes, lexerOutput.source, enviroment);
+        let generator = new Generator(nodes, lexerOutput.source, enviroment, this.output_options);
         let builder = generator.generate();
 
-        return builder.toString();
+        return builder.toString(this.output_options);
     }
 }
