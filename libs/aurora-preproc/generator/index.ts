@@ -11,6 +11,7 @@ import { Position } from "../position";
 import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
 import { Source } from "../source";
+import { allowedSelectorsBeforeNamespace, noSpaceAfterSelectors } from "./selectors-syntax";
 
 export class Generator {
     private readonly nodes: Node[];
@@ -116,12 +117,7 @@ export class Generator {
                         if (value instanceof Node) {
                             result += this.generate_node(value);
                         } else {
-                            let i = 0;
-                            for (const arg of value) {
-                                console.assert(arg instanceof Selector, "Expected Selector, got something else!");
-                                result += this.generate_selector(arg as Selector);
-                                i++;
-                            }
+                            result += this.generate_selectors([value]);
                         }
 
                         if (i < (pseudo.arguments.length - 1)) {
@@ -180,10 +176,6 @@ export class Generator {
 
     private generate_selectors(selectors: Array<Selector[]>): string {
         let result = "";
-        const noSpaceAfter = [
-            SelectorType.Namespace,
-            SelectorType.SelectorSeparator,
-        ];
 
         for (let i = 0; i < selectors.length; i++) {
             let selector_list = selectors[i];
@@ -193,13 +185,16 @@ export class Generator {
 
                 result += this.generate_selector(selector);
 
-                if (selector.type === SelectorType.Namespace && x === selector_list.length - 1) {
-                    this.throw_error(messages.namespace_selector_last, selector.pos);
+                if (selector.type === SelectorType.Namespace) {
+                    if (x === selector_list.length - 1)
+                        this.throw_error(messages.namespace_selector_last, selector.pos);
+                    else if (x >= 1 && allowedSelectorsBeforeNamespace.indexOf(selector_list[x - 1].type) === -1)
+                        this.throw_error(messages.namespace_expected_selector, selector.pos);
                 }
 
                 if (x < (selector_list.length - 1)) {
-                    if (noSpaceAfter.indexOf(selector.type) === -1 &&
-                        noSpaceAfter.indexOf(selector_list[x + 1].type) === -1
+                    if (noSpaceAfterSelectors.indexOf(selector.type) === -1 &&
+                        noSpaceAfterSelectors.indexOf(selector_list[x + 1].type) === -1
                     ){
                         result += ` `;
                     }

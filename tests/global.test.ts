@@ -1,5 +1,6 @@
 import {describe, expect, test} from '@jest/globals';
 import AuroraCSS from "../libs/aurora-preproc";
+import { messages } from '../libs/aurora-preproc/diagnostics';
 
 const generate = (source: string) => {
   let generator = new AuroraCSS({ source });
@@ -241,5 +242,28 @@ describe("Namespace selector", () => {
         `;
         let output = generate(source);
         expect(output).toBe("*|div{color:red;}");
+    });
+
+    test("Elements with parent selector", () => {
+        let source = `
+        .parent {
+            html|& {
+                color: red;
+            }
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("html|.parent{color:red;}");
+    });
+
+    test("Namespace selector must be prefixed only with an identifier", () => {
+        expect(() => {
+            let source = `
+            #hello|div {
+                color: red;
+            }
+            `;
+            generate(source);
+        }).toThrowError(messages.namespace_expected_selector);
     });
 });

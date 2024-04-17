@@ -9,4 +9,5 @@ export const messages = {
 
     unexpected_parent_selector: "Parent selector can't be used on global scope!",
     namespace_selector_last: "Namespace selectors must be followed by a selector!",
+    namespace_expected_selector: "Namespace selector must (if present) be prefixed only with an identifier!",
 }
