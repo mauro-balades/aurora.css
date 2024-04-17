@@ -36,7 +36,7 @@ export class Generator {
 
     // error handling
     public throw_error(message: string, pos: Position) {
-        throw Error(`Error generating CSS: ${message} [${pos.line}:${pos.col}]`);
+        throw Error(`While generating CSS: ${message} [${pos.line}:${pos.col}]`);
     }
 
     // public API

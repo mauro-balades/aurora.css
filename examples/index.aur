@@ -17,7 +17,7 @@ $thing: "hey";
     $color: red;
 
     & div {
-        border-top-color!: $color;
+        border-top-color: $color;
     }
 }
 

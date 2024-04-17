@@ -1,20 +1,20 @@
-#element {
-	border-top: 2px solid white;
+.element {
+	border-top:2px solid white;
 }
 
-#element.hey #element {
-	border-top-color: red;
+.element.hey > .element {
+	border-top-color:red;
 }
 
-#element#element.hey #element input.error {
-	border-top-color: red;
+.element .element.hey > .element input.error {
+	border-top-color:red;
 }
 
-#element div {
-	border-top-color: red !important;
+.element div {
+	border-top-color:red;
 }
 
 .my-div {
-	background-image: unquote("Microsoft:something.wtf-is-going-on::ok");
+	background-image:"hey";
 }
 

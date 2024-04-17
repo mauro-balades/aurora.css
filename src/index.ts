@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import AuroraCSS, { Generator, Lexer, Parser } from "../libs/aurora-preproc";
+const woodenlog = require("woodenlog");
 
 import {Command} from 'commander';
 import * as fs from 'fs';
@@ -13,16 +14,38 @@ const main = () => {
         .description('Upload files to a database')
         .command('<path1> [morePaths...]')
         .option('-o, --output [output_file]', 'Output file to render CSS', "")
+        .option('-m, --minify', 'Minify the output CSS', false)
+        .option('--verbose', 'Verbose output', false)
+        .option('-s, --skip-empty', 'Skip empty blocks', false)
         .parse(process.argv);
 
     let options = args.opts();
 
+    if (args.args.length === 0) {
+        woodenlog.error("No files to compile!");
+        process.exit(1);
+    }
+
     let combined_files = "";
     for (const file of args.args) {
         let source = fs.readFileSync(file,'utf8');
-
-        let generator = new AuroraCSS({ source });
-        let output = generator.generate();
+        let output = "";
+        if (options.verbose) {
+            woodenlog.log(`Compiling ${file}...`);
+        }
+        try {
+            let generator = new AuroraCSS({ source, output_options: {
+                minify_output: options.minify,
+                skip_empty_blocks: options.skip_empty
+            }});
+            output = generator.generate();
+            if (options.verbose) {
+                woodenlog.log(`Compiled ${file} successfully!`);
+            }
+        } catch (e: any) {
+            woodenlog.error(e);
+            process.exit(1);
+        }
 
         if (args.args.length === 1) {
             combined_files = output;
@@ -32,14 +55,16 @@ const main = () => {
     }
 
     if (options.output === "") {
+        console.log("\n")
         console.log(combined_files)
     } else {
+        woodenlog.log(`Successfully compiled to CSS!`);
         fs.writeFile(options.output, combined_files,  function(err) {
             if (err) {
                 return console.error(err);
             }
     
-            console.log("Compiled CSS!")
+            woodenlog.log(`File saved to ${options.output}`);
         });
     }
 }

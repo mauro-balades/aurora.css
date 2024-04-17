@@ -206,7 +206,7 @@ export default class {
             pos = this.current_token.pos;
         }
 
-        throw Error(`Error: ${message} [${pos.line}:${pos.col}]`)
+        throw Error(`${message} [${pos.line}:${pos.col}]`)
     }
 
     // parsing helper functions (not related to token movement)
