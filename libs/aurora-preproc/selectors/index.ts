@@ -9,6 +9,7 @@ export enum SelectorType {
     Attribute,
     Parent,
     Namespace,
+    ChildFollowedBy,
     SelectorSeparator, // , (used to separate selectors)
     SelectAll, // *
 }

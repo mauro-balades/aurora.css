@@ -266,4 +266,54 @@ describe("Namespace selector", () => {
             generate(source);
         }).toThrowError(messages.namespace_expected_selector);
     });
+
+    test("Namespace selector must be followed by a selector", () => {
+        expect(() => {
+            let source = `
+            html| {
+                color: red;
+            }
+            `;
+            generate(source);
+        }).toThrowError(messages.invalid_selector_last);
+    });
+});
+
+describe("Child followed by selector", () => {
+    test("Simple usage", () => {
+        let source = `
+        .parent {
+            > .child {
+                color: red;
+            }
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe(">.child{color:red;}");
+    });
+
+    test("With multiple children", () => {
+        let source = `
+        .parent {
+            & > .child {
+                color: red;
+            }
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe(".parent>.child{color:red;}");
+    });
+
+    test("Must be followed by a selector", () => {
+        expect(() => {
+            let source = `
+            .parent {
+                > {
+
+                }
+            }
+            `;
+            generate(source);
+        }).toThrowError(messages.invalid_selector_last);
+    });
 });

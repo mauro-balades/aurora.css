@@ -35,6 +35,7 @@ export default class {
         TokenType.OP_BIT_AND,
         TokenType.SYM_DOT,
         TokenType.SYM_PIPE,
+        TokenType.OP_GT,
     ];
 
     constructor(lexRes: LexerOutput, env: Enviroment) {
@@ -404,7 +405,9 @@ export default class {
             } else if (token.type === TokenType.SYM_COMMA) {
                 this.next();
                 selectors = [...selectors, ...this._parse_selectors(false, terminator)];
-                break;
+            } else if (token.type === TokenType.OP_GT) {
+                selector = new Selector(SelectorType.ChildFollowedBy, ">", token.pos);
+                this.next();
             } else if (token.type === TokenType.SYM_PIPE) {
                 if (trailing) {
                     // We can't have a trailing namespace selector
@@ -422,7 +425,8 @@ export default class {
             }
 
             // @ts-ignore
-            selectors.push(selector);
+            if (typeof selector !== "undefined")
+                selectors.push(selector);
 
             if (this.current_token.type === TokenType.SYM_COMMA && !trailing) {
                 if (this.peek().type === terminator) {

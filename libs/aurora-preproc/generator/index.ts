@@ -11,7 +11,7 @@ import { Position } from "../position";
 import { Selector, SelectorList, SelectorType } from "../selectors";
 import { PseudoSelector } from "../selectors/pseudo";
 import { Source } from "../source";
-import { allowedSelectorsBeforeNamespace, noSpaceAfterSelectors } from "./selectors-syntax";
+import { allowedSelectorsBeforeNamespace, mustBeFollowedBySelector, mustBePrefixedWithElement, noSpaceAfterSelectors } from "./selectors-syntax";
 
 export class Generator {
     private readonly nodes: Node[];
@@ -153,7 +153,12 @@ export class Generator {
             }
 
             case SelectorType.Namespace: {
-                result += "|";
+                result += `|`;
+                break;
+            } 
+
+            case SelectorType.ChildFollowedBy: {
+                result += (this.gen_opts.minify_output ? "" : " ") + `>` + (this.gen_opts.minify_output ? "" : " ");
                 break;
             }
 
@@ -163,7 +168,7 @@ export class Generator {
             }
 
             default: {
-                this.throw_error("(BUG) unexpected selector type", selector.pos);
+                this.throw_error(`(BUG) unexpected selector type (${selector.type})`, selector.pos);
             }
         }
 
@@ -185,11 +190,17 @@ export class Generator {
 
                 result += this.generate_selector(selector);
 
-                if (selector.type === SelectorType.Namespace) {
-                    if (x === selector_list.length - 1)
-                        this.throw_error(messages.namespace_selector_last, selector.pos);
-                    else if (x >= 1 && allowedSelectorsBeforeNamespace.indexOf(selector_list[x - 1].type) === -1)
-                        this.throw_error(messages.namespace_expected_selector, selector.pos);
+                if (x >= 1 && allowedSelectorsBeforeNamespace.indexOf(selector_list[x - 1].type) === -1 &&
+                        selector.type === SelectorType.Namespace) {
+                    this.throw_error(messages.namespace_expected_selector, selector.pos);
+                }
+
+                if (mustBeFollowedBySelector.indexOf(selector.type) !== -1 &&
+                        x === (selector_list.length - 1)) {
+                    this.throw_error(messages.invalid_selector_last, selector.pos);
+                } else if (mustBePrefixedWithElement.indexOf(selector.type) !== -1 &&
+                        x === 0) {
+                    this.throw_error(messages.invalid_selector_first, selector.pos);
                 }
 
                 if (x < (selector_list.length - 1)) {

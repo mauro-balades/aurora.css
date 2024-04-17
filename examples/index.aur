@@ -3,10 +3,10 @@ $color: white;
 $thing: "hey";
 
 
-#element {
+.element {
     border-top: 2px solid $color;
 
-    &.hey & {
+    &.hey > & {
         border-top-color: red;
 
         & input.error {

@@ -8,6 +8,7 @@ export const messages = {
     undefined_variable: (idnt: string) => `The variable "$${idnt}" is not defined!`,
 
     unexpected_parent_selector: "Parent selector can't be used on global scope!",
-    namespace_selector_last: "Namespace selectors must be followed by a selector!",
+    invalid_selector_last: "This selectors must be followed by a selector!",
+    invalid_selector_first: "This selectors must be preceded by a selector!",
     namespace_expected_selector: "Namespace selector must (if present) be prefixed only with an identifier!",
 }
