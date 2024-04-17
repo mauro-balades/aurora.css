@@ -79,6 +79,16 @@ describe("Parent selector", () => {
       let output = generate(source);
       expect(output).toBe(".parent .child .grandchild{color:red;}.parent .child{color:blue;}");
   });
+
+  test("Elements separated by a comma", () => {
+        let source = `
+        .parent, .child {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe(".parent,.child{color:red;}");
+    });
 });
 
 describe("Pseudo selector", () => {
@@ -179,5 +189,57 @@ describe("Pseudo selector", () => {
         `;
         let output = generate(source);
         expect(output).toBe(".parent .child:is(.parent .child){color:red;}");
+    });
+});
+
+describe("Namespace selector", () => {
+    test("Simple usage", () => {
+        let source = `
+        html|div {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("html|div{color:red;}");
+    });
+
+    test("With multiple selectors", () => {
+        let source = `
+        html|div, html|span {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("html|div,html|span{color:red;}");
+    });
+
+    test("Elements with no namespace", () => {
+        let source = `
+        |div {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("|div{color:red;}");
+    });
+
+    test("Elements with no namespace and multiple selectors", () => {
+        let source = `
+        |div, |span {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("|div,|span{color:red;}");
+    });
+
+    test("Elements with wildcard namespace", () => {
+        let source = `
+        *|div {
+            color: red;
+        }
+        `;
+        let output = generate(source);
+        expect(output).toBe("*|div{color:red;}");
     });
 });

@@ -110,7 +110,9 @@ export default class {
                     if (this.get(1) == '|') {
                         this.consume(TokenType.OP_OR, 2);
                         break;
-                    }
+                    } 
+                    this.consume(TokenType.SYM_PIPE);
+                    break;
                 }
                 case '&': {
                     this.consume(TokenType.OP_BIT_AND);

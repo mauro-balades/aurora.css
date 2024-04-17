@@ -8,6 +8,8 @@ export enum SelectorType {
     PseudoSelector,
     Attribute,
     Parent,
+    Namespace,
+    SelectorSeparator, // , (used to separate selectors)
     SelectAll, // *
 }
 

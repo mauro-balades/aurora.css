@@ -14,6 +14,7 @@ export enum TokenType {
     SYM_DOLLAR,        // Symbol: $
     SYM_QUESTION,      // Symbol: ?
     SYM_SEMI_COLLON,   // Symbol: ;
+    SYM_PIPE,          // Symbol: |
 
     // |- BRACKETS -|
     BRACKET_LCURLY,    // Symbol: {

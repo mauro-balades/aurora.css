@@ -120,9 +120,6 @@ export class Generator {
                             for (const arg of value) {
                                 console.assert(arg instanceof Selector, "Expected Selector, got something else!");
                                 result += this.generate_selector(arg as Selector);
-                                if (i < (value.length - 1)) {
-                                    result += "," + (this.gen_opts.minify_output ? "" : " ");
-                                }
                                 i++;
                             }
                         }
@@ -159,6 +156,16 @@ export class Generator {
                 break;
             }
 
+            case SelectorType.Namespace: {
+                result += "|";
+                break;
+            }
+
+            case SelectorType.SelectorSeparator: {
+                result += `,` + (this.gen_opts.minify_output ? "" : " ");
+                break;
+            }
+
             default: {
                 this.throw_error("(BUG) unexpected selector type", selector.pos);
             }
@@ -173,6 +180,10 @@ export class Generator {
 
     private generate_selectors(selectors: Array<Selector[]>): string {
         let result = "";
+        const noSpaceAfter = [
+            SelectorType.Namespace,
+            SelectorType.SelectorSeparator,
+        ];
 
         for (let i = 0; i < selectors.length; i++) {
             let selector_list = selectors[i];
@@ -182,13 +193,17 @@ export class Generator {
 
                 result += this.generate_selector(selector);
 
-                if (x < (selector_list.length - 1)) {
-                    result += ` `;
+                if (selector.type === SelectorType.Namespace && x === selector_list.length - 1) {
+                    this.throw_error(messages.namespace_selector_last, selector.pos);
                 }
-            }
 
-            if (i < (selectors.length - 1)) {
-                result += ",";
+                if (x < (selector_list.length - 1)) {
+                    if (noSpaceAfter.indexOf(selector.type) === -1 &&
+                        noSpaceAfter.indexOf(selector_list[x + 1].type) === -1
+                    ){
+                        result += ` `;
+                    }
+                }
             }
         }
 

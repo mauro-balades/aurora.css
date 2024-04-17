@@ -34,6 +34,7 @@ export default class {
         TokenType.SYM_HASH,
         TokenType.OP_BIT_AND,
         TokenType.SYM_DOT,
+        TokenType.SYM_PIPE,
     ];
 
     constructor(lexRes: LexerOutput, env: Enviroment) {
@@ -68,6 +69,7 @@ export default class {
                 case TokenType.BRACKET_LSQUARED:
                 case TokenType.SYM_HASH:
                 case TokenType.OP_BIT_AND:
+                case TokenType.SYM_PIPE:
                 case TokenType.SYM_DOT: {
                     // https://www.w3schools.com/cssref/css_selectors.php
 
@@ -403,12 +405,31 @@ export default class {
                 this.next();
                 selectors = [...selectors, ...this._parse_selectors(false, terminator)];
                 break;
-            } else {
+            } else if (token.type === TokenType.SYM_PIPE) {
+                if (trailing) {
+                    // We can't have a trailing namespace selector
+                    // In a past bug, if we did: "*|div" it would crash
+                    // because the trailing namespace selector would be
+                    // added to the selectors array
+                    // having: [SelectAll[Namespace], ID[]]
+                    return [];
+                }
+                this.next();
+                selector = new Selector(SelectorType.Namespace, "|", token.pos);
+                selector.with = this._parse_same_element(terminator);
+            } else {    
                 this.parser_error(messages.unexpected_token("a valid selector character", token));
             }
 
             // @ts-ignore
             selectors.push(selector);
+
+            if (this.current_token.type === TokenType.SYM_COMMA && !trailing) {
+                if (this.peek().type === terminator) {
+                    this.parser_error(messages.unexpected_token("a valid selector character", this.current_token));
+                }
+                selectors.push(new Selector(SelectorType.SelectorSeparator, ",", this.current_token.pos));
+            }
 
             if (trailing) {
                 break;
